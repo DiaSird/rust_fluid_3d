@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "sph_fluid_3d"
+name = "rust_fluid_3d"
 version = "0.1.0"
