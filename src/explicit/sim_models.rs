@@ -3,8 +3,6 @@ use super::{
     sph::Particle,
 };
 use anyhow::{bail, Context, Ok, Result};
-use std::fs::File;
-use std::io::Write;
 
 pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
     // Particle counter, starts from 0
@@ -27,30 +25,25 @@ pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
             }
         }
     }
-    write_coordinates_to_csv(&particles[0..n])?;
+    // write_coordinates_to_csv(&particles[0..n])?;
     Ok(n)
 }
 
 // Write only the particles created
+#[allow(unused)]
 fn write_coordinates_to_csv(particles: &[Particle]) -> Result<()> {
     let filename = "./results/particles_coordinates.csv";
-    let mut file = File::create(filename).context("Failed to create CSV file")?;
+    let mut csv = String::new();
 
     // CSV header
-    writeln!(file, "num,x,y,z").context("Failed to write header to CSV")?;
+    csv.push_str("num,x,y,z\n");
 
     // Output coordinates of the particles created in `make_model`
     for (i, particle) in particles.iter().enumerate() {
-        writeln!(
-            file,
-            "{},{:.3},{:.3},{:.3}",
-            i + 1,
-            particle.x[0],
-            particle.x[1],
-            particle.x[2]
-        )
-        .context("Failed to write particle coordinates to CSV")?;
+        let (x, y, z) = particle.axis();
+        csv.push_str(&format!("{}, {x:.3},{y:.3},{z:.3}\n", i + 1));
     }
 
+    std::fs::write(filename, &csv).context("Failed to create CSV file")?;
     Ok(())
 }
