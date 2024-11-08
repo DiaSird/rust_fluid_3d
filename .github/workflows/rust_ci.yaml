@@ -54,7 +54,7 @@ jobs:
               with:
                 name: rust_fluid_3d-${{runner.os}}
                 path: |
-                    ./result/*.csv
+                    ${{ github.workspace }}/results/*.csv
 
     # test:
     #     runs-on: ubuntu-latest
