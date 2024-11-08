@@ -1,5 +1,7 @@
 default: run
 
+release: fmt clippy run
+
 build:
 	cargo build
 

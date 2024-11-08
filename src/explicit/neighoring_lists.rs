@@ -86,9 +86,7 @@ pub fn cll_property(particles: &mut [Particle]) -> (f64, f64, f64, Grid) {
         let cell_y = cell_location(particle.x[1], min_y);
         let cell_z = cell_location(particle.x[2], min_z);
 
-        grid.entry((cell_x, cell_y, cell_z))
-            .or_insert_with(Vec::new)
-            .push(i);
+        grid.entry((cell_x, cell_y, cell_z)).or_default().push(i);
     }
 
     (min_x, min_y, min_z, grid)
