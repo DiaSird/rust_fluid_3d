@@ -45,7 +45,7 @@ jobs:
 
     run:
         runs-on: ubuntu-latest
-        name: run
+        name: run-linux
         steps:
             - uses: actions/checkout@v4
             - run: make
@@ -55,6 +55,21 @@ jobs:
                 name: rust_fluid_3d-results-${{runner.os}}
                 path: |
                     ${{ github.workspace }}/results/*.csv
+                    ${{ github.workspace }}/targets/debug/rust_fluid_3d
+
+    run-win:
+        runs-on: windows-latest
+        name: run-windows
+        steps:
+            - uses: actions/checkout@v4
+            - run: make
+            - name: Upload a Build Artifact
+              uses: actions/upload-artifact@v4.4.0
+              with:
+                name: rust_fluid_3d-results-${{runner.os}}
+                path: |
+                    ${{ github.workspace }}/results/*.csv
+                    ${{ github.workspace }}/targets/debug/rust_fluid_3d.exe
 
     # test:
     #     runs-on: ubuntu-latest
