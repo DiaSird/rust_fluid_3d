@@ -1,5 +1,9 @@
 use super::parameters::{Material, DIM, HEIGHT, LENGTH, MAX_N, WIDTH};
-use anyhow::{bail, Context, Ok, Result};
+use crate::explicit::{
+    acceleration::update_acceleration, density::update_density,
+    neighoring_lists::search_near_particles, sim_models::make_model, velocity::update_velocity,
+};
+use anyhow::{Context, Ok, Result};
 
 // Particle information
 #[derive(Debug)]
@@ -27,7 +31,7 @@ impl<'a> Particle<'a> {
 
         // a new particle
         Particle {
-            volume: LENGTH * WIDTH * HEIGHT,
+            volume: LENGTH * WIDTH * HEIGHT / MAX_N as f64,
             rho,
             visco,
             x: [0.0, 0.0, 0.0],
@@ -38,55 +42,27 @@ impl<'a> Particle<'a> {
             material,
         }
     }
-
-    pub fn check_density(&self) -> Result<()> {
-        if self.rho == 0.0 {
-            anyhow::bail!("Density is zero for material: {:?}", self.material);
-        }
-        Ok(())
-    }
 }
 
-pub fn make_model() {}
-
-pub fn search_near_particles() {}
-
-pub fn update_density(particles: &mut [Particle]) -> Result<()> {
-    for particle in particles.iter_mut() {
-        particle.rho += 100.0;
-        if particle.rho < 0.0 {
-            bail!("rho cannot be negative: {}", particle.rho);
-        }
-    }
-    Ok(())
-}
-
-pub fn update_acceleration() {}
-
-pub fn update_velocity(particles: &mut [Particle]) -> Result<()> {
-    for particle in particles.iter_mut() {
-        if particle.v[0] < 0.0 {
-            bail!("vx cannot be negative: {}", particle.v[0]);
-        }
-    }
-    Ok(())
-}
-
+// SPH Main function
 pub fn sph(dt: f64, max_step: usize) -> Result<()> {
     // Initialize
     let mut time = 0.0;
-    // let dt = 0.001; // step time
     let water = Material::Water;
     let mut water_particles: [Particle; MAX_N] = std::array::from_fn(|_| Particle::new(&water));
 
     // Simulation Tests
-    let mut step: usize = 1;
-    // let max_step = 100;
+    let n = make_model(&mut water_particles).context("Error model config for water particle.")?;
+    search_near_particles(&mut water_particles[0..n])
+        .context("Error searching near particles for water particle.")?;
 
+    let mut step: usize = 1;
     while step <= max_step {
-        update_density(&mut water_particles)
+        update_density(&mut water_particles[0..n])
             .context("Error updating density for water particle.")?;
-        update_velocity(&mut water_particles)
+        update_acceleration(&mut water_particles[0..n])
+            .context("Error updating acceleration for water particle.")?;
+        update_velocity(&mut water_particles[0..n])
             .context("Error updating velocity for air particle.")?;
 
         dbg!(time);
