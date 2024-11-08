@@ -52,7 +52,7 @@ jobs:
             - name: Upload a Build Artifact
               uses: actions/upload-artifact@v4.4.0
               with:
-                name: rust_fluid_3d-${{runner.os}}
+                name: rust_fluid_3d-results-${{runner.os}}
                 path: |
                     ${{ github.workspace }}/results/*.csv
 
