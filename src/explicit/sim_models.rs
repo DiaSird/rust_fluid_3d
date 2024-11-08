@@ -1,5 +1,5 @@
 use super::{
-    parameters::{DX, DY, DZ, HEIGHT, LENGTH, WIDTH},
+    parameters::{DX, DY, DZ, NX, NY, NZ},
     sph::Particle,
 };
 use anyhow::{bail, Context, Ok, Result};
@@ -7,16 +7,12 @@ use std::fs::File;
 use std::io::Write;
 
 pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
-    let nx: usize = (LENGTH / DX) as usize;
-    let ny: usize = (WIDTH / DY) as usize;
-    let nz: usize = (HEIGHT / DZ) as usize;
-
     // Particle counter, starts from 0
     let mut n = 0;
 
-    for i in 0..=nx {
-        for j in 0..=ny {
-            for k in 0..=nz {
+    for i in 0..=NX {
+        for j in 0..=NY {
+            for k in 0..=NZ {
                 // Check if we exceed the maximum number of particles
                 if n >= particles.len() {
                     bail!("Exceeded the maximum number of particles.");

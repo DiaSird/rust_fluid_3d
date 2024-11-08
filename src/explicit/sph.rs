@@ -6,7 +6,7 @@ use crate::explicit::{
 use anyhow::{Context, Ok, Result};
 
 // Particle information
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Particle<'a> {
     // SPH parameters
     pub volume: f64, // [m^3]

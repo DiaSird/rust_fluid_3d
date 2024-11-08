@@ -1,6 +1,7 @@
 // Min-Max
 pub const MAX_N: usize = 1500; // Max total particles
-pub const MAX_NEAR_N: usize = 1000; // Max nearing particles
+pub const MAX_NEAR_N: usize = 200; // Max nearing particles
+pub const MAX_NEAR_SUM: usize = MAX_N * MAX_NEAR_N;
 
 // config
 pub const DIM: usize = 3; // Dimension
@@ -11,8 +12,12 @@ pub const DX: f64 = 0.1;
 pub const DY: f64 = 0.1;
 pub const DZ: f64 = 0.1;
 
+pub const NX: usize = (LENGTH / DX) as usize;
+pub const NY: usize = (WIDTH / DY) as usize;
+pub const NZ: usize = (HEIGHT / DZ) as usize;
+
 // Material information
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Material {
     Water,
     Air,
