@@ -46,7 +46,9 @@ pub fn update_stress(
     for particle in particles.iter_mut() {
         let p = -tait_eq(particle) * identity;
 
-        // dbg!(p);
+        if p[0] < 0.0 {
+            dbg!(p);
+        }
     }
     Ok(())
 }

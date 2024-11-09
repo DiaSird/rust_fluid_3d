@@ -5,6 +5,5 @@ mod neighoring_lists;
 mod parameters;
 mod sim_models;
 pub mod sph;
-mod sph_utils;
 mod stress;
 mod velocity;
