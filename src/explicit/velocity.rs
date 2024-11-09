@@ -1,4 +1,4 @@
-use super::sph::Particle;
+use super::parameters::Particle;
 use anyhow::{bail, Ok, Result};
 
 pub fn update_velocity(particles: &mut [Particle]) -> Result<()> {

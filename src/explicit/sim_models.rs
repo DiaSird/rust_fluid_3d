@@ -1,7 +1,4 @@
-use super::{
-    parameters::{DX, DY, DZ, NX, NY, NZ},
-    sph::Particle,
-};
+use super::parameters::{Particle, DX, DY, DZ, NX, NY, NZ};
 use anyhow::{bail, Context, Ok, Result};
 
 pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
@@ -25,7 +22,14 @@ pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
             }
         }
     }
+
+    for particle in particles.iter_mut().take(n) {
+        particle.volume /= n as f64;
+    }
+
+    // Debug
     // write_coordinates_to_csv(&particles[0..n])?;
+
     Ok(n)
 }
 

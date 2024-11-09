@@ -1,36 +1,7 @@
-use super::{
-    parameters::{CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH},
-    sph::Particle,
-};
+use super::parameters::{NeighboringList, Particle, CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH};
 use anyhow::{bail, Context as _, Result};
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashMap;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct NeighboringList<const D: usize> {
-    i: usize, // pair i
-    j: usize, // pair j
-    w: f64,
-    dwdr: [f64; D],
-}
-
-impl<const D: usize> NeighboringList<D> {
-    fn new() -> Self {
-        NeighboringList {
-            i: 0,
-            j: 0,
-            w: 0.0,
-            dwdr: [0.0; D],
-        }
-    }
-
-    pub fn kernel_axis3(&self) -> (f64, f64, f64) {
-        let dwdr1 = self.dwdr[0];
-        let dwdr2 = self.dwdr[1];
-        let dwdr3 = self.dwdr[2];
-        (dwdr1, dwdr2, dwdr3)
-    }
-}
 
 pub fn distance(x1: &[f64], x2: &[f64]) -> f64 {
     x1.par_iter()
@@ -92,8 +63,10 @@ pub fn cll_property(particles: &mut [Particle]) -> (f64, f64, f64, Grid) {
     (min_x, min_y, min_z, grid)
 }
 
-pub fn search_near_particles(particles: &mut [Particle]) -> Result<()> {
-    let mut neigh_list: Vec<NeighboringList<DIM>> = vec![NeighboringList::new(); MAX_NEAR_SUM];
+pub fn search_near_particles(
+    particles: &mut [Particle],
+    neigh_lists: &mut [NeighboringList<DIM>],
+) -> Result<usize> {
     let smooth_length_squared = (2.0 * SMOOTH_LENGTH).powf(2.0);
     let (min_x, min_y, min_z, grid) = cll_property(particles);
 
@@ -128,8 +101,8 @@ pub fn search_near_particles(particles: &mut [Particle]) -> Result<()> {
                                 if d < smooth_length_squared {
                                     total_pair += 1;
 
-                                    neigh_list[total_pair].i = i;
-                                    neigh_list[total_pair].j = j;
+                                    neigh_lists[total_pair].i = i;
+                                    neigh_lists[total_pair].j = j;
 
                                     let r = d.sqrt();
                                     let q = r / SMOOTH_LENGTH;
@@ -140,8 +113,8 @@ pub fn search_near_particles(particles: &mut [Particle]) -> Result<()> {
                                     dwdr[1] *= particles[i].x[1] / r;
                                     dwdr[2] *= particles[i].x[2] / r;
 
-                                    neigh_list[total_pair].w = w;
-                                    neigh_list[total_pair].dwdr = dwdr;
+                                    neigh_lists[total_pair].w = w;
+                                    neigh_lists[total_pair].dwdr = dwdr;
                                 }
                             }
                         }
@@ -155,9 +128,9 @@ pub fn search_near_particles(particles: &mut [Particle]) -> Result<()> {
         bail!("Total pair particle is zero.");
     }
 
-    write_kernel_to_csv(particles, &neigh_list[0..total_pair])?;
+    write_kernel_to_csv(particles, &neigh_lists[0..total_pair])?;
 
-    Ok(())
+    Ok(total_pair)
 }
 
 // Write only the particles created
@@ -186,5 +159,3 @@ pub fn write_kernel_to_csv(
     std::fs::write(filename, &csv).context("Failed to create CSV file")?;
     Ok(())
 }
-
-//

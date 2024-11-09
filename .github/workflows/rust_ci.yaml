@@ -39,7 +39,10 @@ jobs:
         needs: build_cache
         steps:
             - uses: actions/checkout@v4
-            - uses: swatinem/rust-cache@v2
+            - name: Rust cache
+              uses: Swatinem/rust-cache@v2.7.3
+              with:
+                prefix-key: cargo-debug-ubuntu-latest
             - name: clippy
               run: cargo clippy --all-targets --all-features -- -D warnings
 
@@ -48,6 +51,10 @@ jobs:
         name: run-linux
         steps:
             - uses: actions/checkout@v4
+            - name: Rust cache
+              uses: Swatinem/rust-cache@v2.7.3
+              with:
+                prefix-key: cargo-debug-ubuntu-latest
             - run: make
             - name: Upload a Build Artifact
               uses: actions/upload-artifact@v4.4.0
@@ -62,6 +69,9 @@ jobs:
         name: run-windows
         steps:
             - uses: actions/checkout@v4
+            - uses: Swatinem/rust-cache@v2.7.3
+              with:
+                prefix-key: cargo-debug-windows-latest
             - run: make
             - name: Upload a Build Artifact
               uses: actions/upload-artifact@v4.4.0
@@ -77,4 +87,3 @@ jobs:
     #     steps:
     #         - uses: actions/checkout@v4
     #         - run: cargo test
-
