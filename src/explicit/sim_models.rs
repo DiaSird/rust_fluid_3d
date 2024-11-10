@@ -1,7 +1,7 @@
-use super::parameters::{Particle, DX, DY, DZ, NX, NY, NZ};
+use super::parameters::{Particle, DIM, DX, DY, DZ, NX, NY, NZ};
 use anyhow::{bail, Context, Ok, Result};
 
-pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
+pub fn make_model(particles: &mut [Particle<DIM>]) -> Result<usize> {
     // Particle counter, starts from 0
     let mut n = 0;
 
@@ -35,7 +35,7 @@ pub fn make_model(particles: &mut [Particle]) -> Result<usize> {
 
 // Write only the particles created
 #[allow(unused)]
-fn write_coordinates_to_csv(particles: &[Particle]) -> Result<()> {
+fn write_coordinates_to_csv(particles: &[Particle<DIM>]) -> Result<()> {
     let filename = "./results/particles_coordinates.csv";
     let mut csv = String::new();
 

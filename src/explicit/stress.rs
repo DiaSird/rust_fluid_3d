@@ -3,7 +3,7 @@ use anyhow::{Ok, Result};
 use nalgebra as na;
 
 // For water
-pub fn tait_eq(particle: &mut Particle) -> f64 {
+pub fn tait_eq(particle: &mut Particle<DIM>) -> f64 {
     let gamma = 7.0; // parameter of Tait eq.
     let c0 = 1483.18; // sound velocity [m/s]
     let b = (c0 * c0) / gamma; // parameter of Tait eq.
@@ -13,7 +13,7 @@ pub fn tait_eq(particle: &mut Particle) -> f64 {
     particle.rho0 * b * (rho_ratio.powf(gamma) - 1.0)
 }
 
-pub fn viscosity_stress(particles: &mut [Particle], neighbors: &mut [NeighboringList<DIM>]) {
+pub fn viscosity_stress(particles: &mut [Particle<DIM>], neighbors: &mut [NeighboringList<DIM>]) {
     for neigh in neighbors.iter_mut() {
         let mut grad_vi = na::Matrix3::zeros();
         let mut grad_vj = na::Matrix3::zeros();
@@ -27,7 +27,6 @@ pub fn viscosity_stress(particles: &mut [Particle], neighbors: &mut [Neighboring
 
         grad_vi += (vi - vj) * dwdr.transpose() * volume_j;
         grad_vj += (vj - vi) * dwdr.transpose() * volume_i;
-        // dbg!(grad_vi);
     }
 
     // for particle in particles.iter_mut() {
@@ -36,7 +35,7 @@ pub fn viscosity_stress(particles: &mut [Particle], neighbors: &mut [Neighboring
 }
 
 pub fn update_stress(
-    particles: &mut [Particle],
+    particles: &mut [Particle<DIM>],
     neighbors: &mut [NeighboringList<DIM>],
 ) -> Result<()> {
     let identity: na::Matrix3<f64> = na::Matrix3::identity();

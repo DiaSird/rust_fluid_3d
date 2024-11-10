@@ -1,6 +1,6 @@
 use nalgebra as na;
 
-// Min-Max
+// Max parameters
 pub const MAX_N: usize = 1400; // Max total particles
 pub const MAX_NEAR_N: usize = 100; // Max nearing particles
 pub const MAX_NEAR_SUM: usize = MAX_N * MAX_NEAR_N;
@@ -9,11 +9,13 @@ pub const MAX_NEAR_SUM: usize = MAX_N * MAX_NEAR_N;
 pub const SMOOTH_LENGTH: f64 = 0.1; // [m]
 pub const CELL_SIZE: f64 = 2.0 * SMOOTH_LENGTH; // [m]
 
-// config
+// MOdel config
 pub const DIM: usize = 3; // Dimension
 pub const LENGTH: f64 = 1.0; // x-axis [m]
 pub const WIDTH: f64 = 1.0; // y-axis [m]
 pub const HEIGHT: f64 = 1.0; // z-xis [m]
+
+// Resolution
 pub const DX: f64 = 0.1; // x-axis [m]
 pub const DY: f64 = 0.1; // y-axis [m]
 pub const DZ: f64 = 0.1; // z-axis [m]
@@ -31,25 +33,26 @@ pub enum Fluid {
 
 // Particle information
 #[derive(Debug, PartialEq)]
-pub struct Particle {
+pub struct Particle<const D: usize> {
     // SPH parameters
     pub volume: f64, // [m^3]
 
-    // physical quantity for fluid equations
+    // physical quantity for fluid
     pub rho0: f64,                // initial density [kg/m^3]
     pub rho: f64,                 // density [kg/m^3]
     pub visco: f64,               // viscosity [Pa*s]
     pub x: [f64; DIM],            // location vector [m]
     pub v: [f64; DIM],            // velocity [m/s]
-    pub stress: na::Matrix3<f64>, // Cuuthy stress [Pa]
+    pub stress: na::Matrix3<f64>, // Cauthy stress [Pa]
     pub dvdt: [f64; DIM],         // acceleration [m/s^2]
     pub e: f64,                   // total energy [J]
     pub dedt: f64,                // power [J/s]
     pub fluid: Fluid,             // Fluid type (Water, Air, etc.)
 }
 
-impl Particle {
+impl<const D: usize> Particle<D> {
     pub fn new(fluid: Fluid) -> Self {
+        // Fluid properties
         let (rho, visco) = match fluid {
             Fluid::Water => (1000.0, 0.001),
             Fluid::Air => (1.225, 0.0000181),
@@ -58,7 +61,7 @@ impl Particle {
         // initial value
         let rho0 = rho;
 
-        // a new particle
+        // set a new particle
         Particle {
             volume: LENGTH * WIDTH * HEIGHT,
             rho0,
@@ -82,6 +85,7 @@ impl Particle {
     }
 }
 
+// SPH Neighboring List
 #[derive(Debug, PartialEq)]
 pub struct NeighboringList<const D: usize> {
     pub i: usize, // pair i

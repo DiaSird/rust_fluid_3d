@@ -6,10 +6,11 @@ use std::collections::HashMap;
 pub fn distance(x1: &[f64], x2: &[f64]) -> f64 {
     x1.par_iter()
         .zip(x2.par_iter())
-        .map(|(xi, yi)| (xi - yi).powi(2))
+        .map(|(xi, yi)| (xi - yi).powf(2.0))
         .sum()
 }
 
+// Kernel function
 pub fn b_spline_kernel(q: f64) -> (f64, f64) {
     match q {
         0.0..=1.0 => {
@@ -30,11 +31,11 @@ pub fn b_spline_kernel(q: f64) -> (f64, f64) {
 
 type Grid = HashMap<(usize, usize, usize), Vec<usize>>;
 
-pub fn cll_property(particles: &mut [Particle]) -> (f64, f64, f64, Grid) {
+pub fn cll_property(particles: &mut [Particle<DIM>]) -> (f64, f64, f64, Grid) {
     // HashMap for cell layout
     let mut grid: Grid = HashMap::new();
 
-    fn min_location(particles: &mut [Particle], index: usize) -> f64 {
+    fn min_location(particles: &mut [Particle<DIM>], index: usize) -> f64 {
         particles
             .iter()
             .map(|p| p.x[index])
@@ -50,7 +51,7 @@ pub fn cll_property(particles: &mut [Particle]) -> (f64, f64, f64, Grid) {
         ((x - min) / CELL_SIZE).floor() as usize
     }
 
-    // Place particles into cells (calculation of cell indices considering the minimum coordinates)
+    // Place particles into cells
     for (i, particle) in particles.iter().enumerate() {
         // Subtract the minimum coordinates and divide by cell size to calculate cell index
         let cell_x = cell_location(particle.x[0], min_x);
@@ -64,15 +65,14 @@ pub fn cll_property(particles: &mut [Particle]) -> (f64, f64, f64, Grid) {
 }
 
 pub fn search_near_particles(
-    particles: &mut [Particle],
+    particles: &mut [Particle<DIM>],
     neigh_lists: &mut [NeighboringList<DIM>],
 ) -> Result<usize> {
     let smooth_length_squared = (2.0 * SMOOTH_LENGTH).powf(2.0);
     let (min_x, min_y, min_z, grid) = cll_property(particles);
 
-    let mut total_pair: usize = 0;
-
     // i -> j loop
+    let mut total_pair: usize = 0;
     for (i, particle) in particles.iter().enumerate() {
         let cell_x = ((particle.x[0] - min_x) / CELL_SIZE).floor() as isize;
         let cell_y = ((particle.x[1] - min_y) / CELL_SIZE).floor() as isize;
@@ -101,6 +101,7 @@ pub fn search_near_particles(
                                 if d < smooth_length_squared {
                                     total_pair += 1;
 
+                                    // Store pair particles
                                     neigh_lists[total_pair].i = i;
                                     neigh_lists[total_pair].j = j;
 
@@ -109,6 +110,8 @@ pub fn search_near_particles(
 
                                     let (w, dwdq) = b_spline_kernel(q);
                                     let mut dwdr = [dwdq / SMOOTH_LENGTH; DIM];
+
+                                    // x/r = base vector
                                     dwdr[0] *= particles[i].x[0] / r;
                                     dwdr[1] *= particles[i].x[1] / r;
                                     dwdr[2] *= particles[i].x[2] / r;
@@ -135,7 +138,7 @@ pub fn search_near_particles(
 
 // Write only the particles created
 pub fn write_kernel_to_csv(
-    particles: &[Particle],
+    particles: &[Particle<DIM>],
     neighbors: &[NeighboringList<DIM>],
 ) -> Result<()> {
     let filename = "./results/kernel.csv";
