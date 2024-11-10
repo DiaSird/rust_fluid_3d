@@ -5,7 +5,7 @@ use nalgebra as na;
 
 pub fn update_density(
     dt: f64,
-    particles: &mut [Particle],
+    particles: &mut [Particle<DIM>],
     neighbors: &mut [NeighboringList<DIM>],
 ) -> Result<()> {
     let mut div_vi = vec![0.0; MAX_N];
