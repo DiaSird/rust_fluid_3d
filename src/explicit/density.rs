@@ -1,34 +1,30 @@
-use super::parameters::{NeighboringList, Particle, DIM};
-use crate::explicit::parameters::MAX_N;
-use anyhow::Result;
-use nalgebra as na;
+use super::{
+    parameters::{NeighboringList, Particle, DIM},
+    sph_utils::Velocity,
+};
+use crate::explicit::sph_utils::SphDiff;
+use anyhow::{Context, Result};
 
 pub fn update_density(
     dt: f64,
     particles: &mut [Particle<DIM>],
     neighbors: &mut [NeighboringList<DIM>],
+    velocity: &mut [Velocity<DIM>],
 ) -> Result<()> {
-    let mut div_vi = vec![0.0; MAX_N];
-    let mut div_vj = vec![0.0; MAX_N];
+    // Total particles
+    let n = particles.len();
 
-    for neigh in neighbors.iter_mut() {
-        let vi = na::Vector3::from(particles[neigh.i].v);
-        let vj = na::Vector3::from(particles[neigh.j].v);
-        let dwdr = na::Vector3::from(neigh.dwdr);
-
-        let volume_i = particles[neigh.i].volume;
-        let volume_j = particles[neigh.j].volume;
-
-        div_vi[neigh.i] += (vi - vj).dot(&dwdr) * volume_j;
-        div_vj[neigh.j] += (vj - vi).dot(&-dwdr) * volume_i;
+    // Calculate div(velocity)
+    for (i, v) in velocity.iter_mut().enumerate().take(n) {
+        v.sph_div(particles, neighbors, i)
+            .context("Failed: div-v")?;
     }
 
-    for neigh in neighbors.iter_mut() {
-        particles[neigh.i].rho += -particles[neigh.i].rho * div_vi[neigh.i] * dt;
-        particles[neigh.j].rho += -particles[neigh.j].rho * div_vi[neigh.j] * dt;
+    // update: rho = -rho * div(velocity) * dt
+    for (i, v) in velocity.iter_mut().enumerate().take(n) {
+        particles[i].rho += -particles[i].rho * v.div_v * dt;
+        // dbg!(particles[i].rho);
     }
-
-    // dbg!(-particles[0].rho * div_vi[0] * dt);
 
     Ok(())
 }

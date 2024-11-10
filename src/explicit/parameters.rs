@@ -35,6 +35,7 @@ pub enum Fluid {
 #[derive(Debug, PartialEq)]
 pub struct Particle<const D: usize> {
     // SPH parameters
+    pub pair: usize, // pair numbers per one particles
     pub volume: f64, // [m^3]
 
     // physical quantity for fluid
@@ -63,6 +64,7 @@ impl<const D: usize> Particle<D> {
 
         // set a new particle
         Particle {
+            pair: 0,
             volume: LENGTH * WIDTH * HEIGHT,
             rho0,
             rho,

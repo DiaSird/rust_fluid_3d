@@ -64,6 +64,7 @@ pub fn cll_property(particles: &mut [Particle<DIM>]) -> (f64, f64, f64, Grid) {
     (min_x, min_y, min_z, grid)
 }
 
+// Searching
 pub fn search_near_particles(
     particles: &mut [Particle<DIM>],
     neigh_lists: &mut [NeighboringList<DIM>],
@@ -131,9 +132,17 @@ pub fn search_near_particles(
         bail!("Total pair particle is zero.");
     }
 
+    make_neiboring_list(particles, &neigh_lists[0..total_pair]);
     write_kernel_to_csv(particles, &neigh_lists[0..total_pair])?;
 
     Ok(total_pair)
+}
+
+pub fn make_neiboring_list(particles: &mut [Particle<DIM>], neighbors: &[NeighboringList<DIM>]) {
+    for (pair, neigh) in neighbors.iter().enumerate() {
+        // calculate pair numbers per one particle
+        particles[neigh.i].pair = pair;
+    }
 }
 
 // Write only the particles created
@@ -149,13 +158,13 @@ pub fn write_kernel_to_csv(
 
     // Output coordinates of the particles created in `make_model`
     for (pair, neigh) in neighbors.iter().enumerate() {
-        let NeighboringList { i, w, .. } = neigh;
+        let NeighboringList { i, j, w, .. } = neigh;
         let (x, y, z) = particles[*i].axis();
         let (dwdr1, dwdr2, dwdr3) = neigh.kernel_axis3();
 
         csv.push_str(&format!(
-            "{}, {x:.3},{y:.3},{z:.3},{w:.3},{dwdr1:.3},{dwdr2:.3},{dwdr3:.3}\n",
-            pair + 1,
+            "{},{i},{j},{x:.3},{y:.3},{z:.3},{w:.3},{dwdr1:.3},{dwdr2:.3},{dwdr3:.3}\n",
+            pair,
         ));
     }
 
