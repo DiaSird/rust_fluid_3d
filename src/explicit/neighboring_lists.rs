@@ -1,4 +1,6 @@
-use super::parameters::{NeighboringList, Particle, CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH};
+use super::parameters::{
+    NeighboringList as Neighbor, Particle, CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH,
+};
 use anyhow::{bail, Context as _, Result};
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashMap;
@@ -67,7 +69,7 @@ pub fn cll_property(particles: &mut [Particle<DIM>]) -> (f64, f64, f64, Grid) {
 // Searching
 pub fn search_near_particles(
     particles: &mut [Particle<DIM>],
-    neigh_lists: &mut [NeighboringList<DIM>],
+    neigh_lists: &mut [Neighbor<DIM>],
 ) -> Result<usize> {
     let smooth_length_squared = (2.0 * SMOOTH_LENGTH).powf(2.0);
     let (min_x, min_y, min_z, grid) = cll_property(particles);
@@ -138,7 +140,7 @@ pub fn search_near_particles(
     Ok(total_pair)
 }
 
-pub fn make_neiboring_list(particles: &mut [Particle<DIM>], neighbors: &[NeighboringList<DIM>]) {
+pub fn make_neiboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neighbor<DIM>]) {
     for (pair, neigh) in neighbors.iter().enumerate() {
         // calculate pair numbers per one particle
         particles[neigh.i].pair = pair;
@@ -146,10 +148,7 @@ pub fn make_neiboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neighbo
 }
 
 // Write only the particles created
-pub fn write_kernel_to_csv(
-    particles: &[Particle<DIM>],
-    neighbors: &[NeighboringList<DIM>],
-) -> Result<()> {
+pub fn write_kernel_to_csv(particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>]) -> Result<()> {
     let filename = "./results/kernel.csv";
     let mut csv = String::new();
 
@@ -158,7 +157,7 @@ pub fn write_kernel_to_csv(
 
     // Output coordinates of the particles created in `make_model`
     for (pair, neigh) in neighbors.iter().enumerate() {
-        let NeighboringList { i, j, w, .. } = neigh;
+        let Neighbor { i, j, w, .. } = neigh;
         let (x, y, z) = particles[*i].axis();
         let (dwdr1, dwdr2, dwdr3) = neigh.kernel_axis3();
 
