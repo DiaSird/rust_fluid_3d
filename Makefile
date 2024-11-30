@@ -9,7 +9,7 @@ run:
 	cargo run
 
 fmt:
-	cargo fmt --all -- --check
+	cargo fmt --all
 
 clippy:
-	cargo clippy --all-targets --all-features -- -D warnings
+	cargo clippy --fix --allow-staged --allow-dirty

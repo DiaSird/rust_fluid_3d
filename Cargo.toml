@@ -7,3 +7,6 @@ edition = "2021"
 anyhow = "1.0.93"
 rayon = "1.10.0"
 nalgebra = "0.33.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+csv = "1.1"
