@@ -70,11 +70,11 @@ pub fn sph(mut dt: f64, out_step: usize, max_step: usize) -> Result<()> {
         update_half_velocity(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
 
         if step % out_step == 0 {
-            display_result(step, time, &mut particles[0..n])?;
+            display_result(step, time, &particles[0..n])?;
         }
 
         if step % out_step == 0 {
-            write_result(step, &mut particles[0..n])?;
+            write_result(step, &particles[0..n])?;
         }
 
         time += dt;

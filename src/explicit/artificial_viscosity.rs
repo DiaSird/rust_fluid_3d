@@ -14,7 +14,7 @@ pub fn update_artificial_viscosity(
         let xij = na::Vector3::from(particles[neigh.i].x) - na::Vector3::from(particles[neigh.j].x);
 
         let v_dot_x = vij.dot(&xij);
-        let coef = &v_dot_x / (xij.dot(&xij) + (0.1 * SMOOTH_LENGTH).powf(2.0));
+        let coef = v_dot_x / (xij.dot(&xij) + (0.1 * SMOOTH_LENGTH).powf(2.0));
 
         if v_dot_x < 0.0 {
             let identity: na::Matrix3<f64> = na::Matrix3::identity();

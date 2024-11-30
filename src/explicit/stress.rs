@@ -12,8 +12,7 @@ pub fn tait_eq(particle: &mut Particle<DIM>) -> f64 {
     let rho_ratio = particle.rho / particle.rho0;
 
     // Pressure using Tait equation
-    let p = particle.rho0 * b * (rho_ratio.powf(gamma) - 1.0);
-    p
+    particle.rho0 * b * (rho_ratio.powf(gamma) - 1.0)
 }
 
 pub fn static_stress(particles: &mut [Particle<DIM>]) {
@@ -21,7 +20,7 @@ pub fn static_stress(particles: &mut [Particle<DIM>]) {
 
     for particle in particles.iter_mut() {
         // p = p * identity matrix
-        let p = -tait_eq(particle) * &identity;
+        let p = -tait_eq(particle) * identity;
         particle.stress += p;
     }
 }
