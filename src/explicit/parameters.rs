@@ -4,7 +4,8 @@
 use nalgebra as na;
 
 // Max parameters
-pub const MAX_N: usize = 1400; // Max total particles
+// pub const MAX_N: usize = 1400; // Max total particles
+pub const MAX_N: usize = 10000; // Max total particles
 pub const MAX_NEAR_N: usize = 100; // Max nearing particles
 pub const MAX_NEAR_SUM: usize = MAX_N * MAX_NEAR_N;
 

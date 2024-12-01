@@ -31,7 +31,8 @@ pub fn sph(mut dt: f64, out_step: usize, max_step: usize) -> Result<()> {
 
     // --- Initialing Simulation
     // n: total particle numbers, k: total pair particles
-    let n: usize = make_model(&mut particles).context("Failed: model config")?;
+    let n: usize = make_model("box", &mut particles).context("Failed: model config")?;
+
     let k = search_near_particles(&mut particles[0..n], &mut neighbors)
         .context("Failed: searching near particles")?;
 
