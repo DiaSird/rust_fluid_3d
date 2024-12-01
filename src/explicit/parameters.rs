@@ -1,29 +1,43 @@
 // -------------------------------------------------------
 //  COnstant and Global parameters
 // -------------------------------------------------------
-use nalgebra as na;
+use nalgebra::{self as na, SimdComplexField};
 
 // Max parameters
-// pub const MAX_N: usize = 1400; // Max total particles
-pub const MAX_N: usize = 10000; // Max total particles
-pub const MAX_NEAR_N: usize = 100; // Max nearing particles
+// pub const MAX_N: usize = 1400;  // Max total particles
+/// Max total particles
+pub const MAX_N: usize = 10000;
+/// Max nearing particles
+pub const MAX_NEAR_N: usize = 100;
 pub const MAX_NEAR_SUM: usize = MAX_N * MAX_NEAR_N;
 
 // SPH parameters
-pub const SMOOTH_LENGTH: f64 = 0.1; // [m]
-pub const CELL_SIZE: f64 = 2.0 * SMOOTH_LENGTH; // [m]
+/// Smooth length [m]
+pub const SMOOTH_LENGTH: f64 = 0.1;
+/// CLL Cell size[m]
+pub const CELL_SIZE: f64 = 2.0 * SMOOTH_LENGTH;
+/// artificial viscosity
 pub const BETA: f64 = 1.0;
+/// conservative smoothing rate *100 [%]
+pub const CS_RATE: f64 = 0.05;
 
 // MOdel config
-pub const DIM: usize = 3; // Dimension
-pub const LENGTH: f64 = 1.0; // x-axis [m]
-pub const WIDTH: f64 = 1.0; // y-axis [m]
-pub const HEIGHT: f64 = 1.0; // z-xis [m]
+// Dimension
+pub const DIM: usize = 3;
+// x-axis [m]
+pub const LENGTH: f64 = 1.0;
+// y-axis [m]
+pub const WIDTH: f64 = 1.0;
+// z-xis [m]
+pub const HEIGHT: f64 = 1.0;
 
 // Resolution
-pub const DX: f64 = 0.1; // x-axis [m]
-pub const DY: f64 = 0.1; // y-axis [m]
-pub const DZ: f64 = 0.1; // z-axis [m]
+// x-axis [m]
+pub const DX: f64 = 0.1;
+// y-axis [m]
+pub const DY: f64 = 0.1;
+// z-axis [m]
+pub const DZ: f64 = 0.1;
 
 pub const NX: usize = (LENGTH / DX) as usize;
 pub const NY: usize = (WIDTH / DY) as usize;
@@ -36,35 +50,54 @@ pub enum Fluid {
     Air,
 }
 
+/// type arias
+type Vector<const DIM: usize> =
+    na::Matrix<f64, na::Const<DIM>, na::U1, na::ArrayStorage<f64, DIM, 1>>;
+
+type Matrix<const DIM: usize> =
+    na::Matrix<f64, na::Const<DIM>, na::Const<DIM>, na::ArrayStorage<f64, DIM, DIM>>;
+
 // Particle information
 #[derive(Debug, PartialEq)]
-pub struct Particle<const D: usize> {
+pub struct Particle<const DIM: usize> {
     // SPH parameters
     pub pair: usize, // pair numbers per one particles
     pub volume: f64, // [m^3]
 
     // physical quantity for fluid
-    pub rho0: f64,                // initial density [kg/m^3]
-    pub rho: f64,                 // density [kg/m^3]
-    pub visco: f64,               // viscosity [Pa*s]
-    pub sound_v: f64,             // sound velocity [m/s]
-    pub x: [f64; DIM],            // location vector [m]
-    pub v: [f64; DIM],            // velocity [m/s]
-    pub stress: na::Matrix3<f64>, // Cauthy stress [Pa]
-    pub dvdt: [f64; DIM],         // acceleration [m/s^2]
-    pub e: f64,                   // total energy [J]
-    pub dedt: f64,                // power [J/s]
-    pub temperature: f64,         // Temperature [K]
-    pub fluid: Fluid,             // Fluid type (Water, Air, etc.)
+    /// initial density [kg/m^3]
+    pub rho0: f64,
+    /// density [kg/m^3]
+    pub rho: f64,
+    /// viscosity [Pa*s]
+    pub visco: f64,
+    /// sound velocity [m/s]
+    pub sound_v: f64,
+    /// location vector [m]
+    pub x: Vector<DIM>,
+    /// velocity [m/s]
+    pub v: Vector<DIM>,
+    /// Cauthy stress [Pa]
+    pub stress: Matrix<DIM>,
+    /// acceleration [m/s^2]
+    pub dvdt: Vector<DIM>,
+    /// total energy [J]
+    pub e: f64,
+    /// power [J/s]
+    pub dedt: f64,
+    /// Temperature [K]
+    pub temperature: f64,
+    /// Fluid type (Water, Air, etc.)
+    pub fluid: Fluid,
 }
 
-impl<const D: usize> Particle<D> {
+impl<const DIM: usize> Particle<DIM> {
     pub fn new(fluid: Fluid) -> Self {
         // Initial temperature and sound speed
         let temperature: f64 = 273.15 + 20.0;
         let sound_air = 331.3 + (0.6 * (temperature - 273.15));
         let sound_water =
-            1402.4 + 5.04 * (temperature - 273.15) - 0.057 * (temperature - 273.15).powf(2.0);
+            1402.4 + 5.04 * (temperature - 273.15) - 0.057 * (temperature - 273.15).simd_powf(2.0);
 
         // Fluid properties
         let (rho, visco, sound_v) = match fluid {
@@ -83,10 +116,10 @@ impl<const D: usize> Particle<D> {
             rho,
             visco,
             sound_v,
-            x: [0.0, 0.0, 0.0],
-            v: [0.0, 0.0, 0.0],
-            stress: na::Matrix3::zeros(),
-            dvdt: [0.0, 0.0, 0.0],
+            x: Vector::<DIM>::zeros(),
+            v: Vector::<DIM>::zeros(),
+            stress: Matrix::<DIM>::zeros(),
+            dvdt: Vector::<DIM>::zeros(),
             e: 0.0,
             dedt: 0.0,
             temperature,
@@ -118,20 +151,20 @@ impl<const D: usize> Particle<D> {
 
 // SPH Neighboring List
 #[derive(Debug, PartialEq)]
-pub struct NeighboringList<const D: usize> {
+pub struct NeighboringList<const DIM: usize> {
     pub i: usize, // pair i
     pub j: usize, // pair j
     pub w: f64,
-    pub dwdr: [f64; D],
+    pub dwdr: [f64; DIM],
 }
 
-impl<const D: usize> NeighboringList<D> {
+impl<const DIM: usize> NeighboringList<DIM> {
     pub fn new() -> Self {
         NeighboringList {
             i: 0,
             j: 0,
             w: 0.0,
-            dwdr: [0.0; D],
+            dwdr: [0.0; DIM],
         }
     }
 

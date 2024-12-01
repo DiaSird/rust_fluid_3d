@@ -6,6 +6,7 @@ mod density;
 mod neighboring_lists;
 mod parameters;
 mod sim_models;
+mod smoothing;
 pub mod sph;
 mod sph_utils;
 mod stress;

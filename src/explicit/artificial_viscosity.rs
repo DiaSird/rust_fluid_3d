@@ -1,6 +1,6 @@
 use super::parameters::{NeighboringList as Neighbor, Particle, BETA, DIM, SMOOTH_LENGTH};
 use anyhow::{Ok, Result};
-use nalgebra as na;
+use nalgebra::{self as na, SimdComplexField};
 
 pub fn update_artificial_viscosity(
     particles: &mut [Particle<DIM>],
@@ -14,12 +14,12 @@ pub fn update_artificial_viscosity(
         let xij = na::Vector3::from(particles[neigh.i].x) - na::Vector3::from(particles[neigh.j].x);
 
         let v_dot_x = vij.dot(&xij);
-        let coef = v_dot_x / (xij.dot(&xij) + (0.1 * SMOOTH_LENGTH).powf(2.0));
+        let coef = v_dot_x / (xij.dot(&xij) + (0.1 * SMOOTH_LENGTH).simd_powf(2.0));
 
         if v_dot_x < 0.0 {
             let identity: na::Matrix3<f64> = na::Matrix3::identity();
-            let mut coef_i = -BETA * cij * coef + BETA * coef.powf(2.0);
-            let mut coef_j = -BETA * cij * coef + BETA * coef.powf(2.0);
+            let mut coef_i = -BETA * cij * coef + BETA * coef.simd_powf(2.0);
+            let mut coef_j = -BETA * cij * coef + BETA * coef.simd_powf(2.0);
 
             coef_i /= rhoij;
             coef_j /= rhoij;

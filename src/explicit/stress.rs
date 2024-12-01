@@ -3,16 +3,16 @@ use super::{
     sph_utils::Velocity,
 };
 use anyhow::{Ok, Result};
-use nalgebra as na;
+use nalgebra::{self as na, SimdComplexField};
 
 // For water
 pub fn tait_eq(particle: &mut Particle<DIM>) -> f64 {
     let gamma = 7.0; // parameter of Tait eq.
-    let b = particle.sound_v.powf(2.0) / gamma; // parameter of Tait eq.
+    let b = particle.sound_v.simd_powf(2.0) / gamma; // parameter of Tait eq.
     let rho_ratio = particle.rho / particle.rho0;
 
     // Pressure using Tait equation
-    particle.rho0 * b * (rho_ratio.powf(gamma) - 1.0)
+    particle.rho0 * b * (rho_ratio.simd_powf(gamma) - 1.0)
 }
 
 pub fn static_stress(particles: &mut [Particle<DIM>]) {

@@ -7,6 +7,7 @@ use super::{
     neighboring_lists::search_near_particles,
     parameters::{Fluid, NeighboringList as Neighbor, Particle, DIM, MAX_N, MAX_NEAR_SUM},
     sim_models::make_model,
+    smoothing::conservative_smoothing,
     sph_utils::{Tensor, Velocity},
     stress::update_stress,
     velocity::{update_half_velocity, update_location},
@@ -69,6 +70,9 @@ pub fn sph(mut dt: f64, out_step: usize, max_step: usize) -> Result<()> {
         )
         .context("Failed: updating acceleration")?;
         update_half_velocity(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
+
+        conservative_smoothing(&mut particles[0..n], &mut neighbors[0..k])
+            .context("Failed: conservative smoothing")?;
 
         if step % out_step == 0 {
             display_result(step, time, &particles[0..n])?;

@@ -1,6 +1,6 @@
 use super::parameters::{NeighboringList as Neighbor, Particle, DIM};
 use anyhow::{bail, Result};
-use nalgebra as na;
+use nalgebra::{self as na, SimdComplexField};
 
 // -- Traits --
 // Standard sph
@@ -147,8 +147,8 @@ impl SphDiff for Tensor<DIM> {
             let volume_i = particles[i].volume;
             let volume_j = particles[j].volume;
 
-            tensor_i /= particles[i].rho.powf(2.0);
-            tensor_j /= particles[j].rho.powf(2.0);
+            tensor_i /= particles[i].rho.simd_powf(2.0);
+            tensor_j /= particles[j].rho.simd_powf(2.0);
 
             let dot_i = particles[i].rho * (tensor_i + -tensor_j) * dwdr;
             let dot_j = particles[j].rho * (tensor_j + tensor_i) * (-dwdr);
