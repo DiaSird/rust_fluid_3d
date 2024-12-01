@@ -155,7 +155,7 @@ pub struct NeighboringList<const DIM: usize> {
     pub i: usize, // pair i
     pub j: usize, // pair j
     pub w: f64,
-    pub dwdr: [f64; DIM],
+    pub dwdr: Vector<DIM>,
 }
 
 impl<const DIM: usize> NeighboringList<DIM> {
@@ -164,7 +164,7 @@ impl<const DIM: usize> NeighboringList<DIM> {
             i: 0,
             j: 0,
             w: 0.0,
-            dwdr: [0.0; DIM],
+            dwdr: Vector::zeros(),
         }
     }
 

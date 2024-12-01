@@ -22,6 +22,7 @@ pub fn conservative_smoothing(
     particles: &mut [Particle<DIM>],
     neighbors: &mut [Neighbor<DIM>],
 ) -> Result<()> {
+    // initialize coefficients
     let mut coef = vec![0.0; MAX_N];
     let mut cs_value: Vec<CsValue> = (0..MAX_N).map(|_| CsValue::new()).collect();
 
@@ -45,6 +46,7 @@ pub fn conservative_smoothing(
         cs_value[*j].stress += coef_j * stress_j;
     });
 
+    // smoothing
     for (i, particle) in particles.iter_mut().enumerate() {
         particle.v = (1.0 - CS_RATE) * particle.v + CS_RATE * cs_value[i].velocity / coef[i];
         particle.stress =

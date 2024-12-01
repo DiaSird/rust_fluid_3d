@@ -2,6 +2,7 @@ use super::parameters::{
     NeighboringList as Neighbor, Particle, CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH,
 };
 use anyhow::{bail, Context as _, Result};
+use nalgebra as na;
 use nalgebra::SimdComplexField;
 use std::collections::HashMap;
 
@@ -104,7 +105,7 @@ pub fn search_near_particles(
                                     let q = d / SMOOTH_LENGTH;
 
                                     let (w, dwdq) = b_spline_kernel(q);
-                                    let mut dwdr = [dwdq / SMOOTH_LENGTH; DIM];
+                                    let mut dwdr = na::Vector::from([dwdq / SMOOTH_LENGTH; DIM]);
 
                                     // x/r = base vector
                                     dwdr[0] *= particles[i].x[0] / d;
