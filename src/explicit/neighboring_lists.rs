@@ -2,27 +2,20 @@ use super::parameters::{
     NeighboringList as Neighbor, Particle, CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH,
 };
 use anyhow::{bail, Context as _, Result};
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use nalgebra::SimdComplexField;
 use std::collections::HashMap;
-
-pub fn distance(x1: &[f64], x2: &[f64]) -> f64 {
-    x1.par_iter()
-        .zip(x2.par_iter())
-        .map(|(xi, yi)| (xi - yi).powf(2.0))
-        .sum()
-}
 
 // Kernel function
 pub fn b_spline_kernel(q: f64) -> (f64, f64) {
     match q {
         0.0..=1.0 => {
-            let q2 = q.powf(2.0);
+            let q2 = q.simd_powf(2.0);
             let w = 1.0 - 1.5 * q2 + 0.75 * q2 * q;
             let dwdq = -3.0 * q + 2.25 * q2;
             (w, dwdq)
         }
         1.0..=2.0 => {
-            let q3 = (2.0 - q).powf(3.0);
+            let q3 = (2.0 - q).simd_powf(3.0);
             let w = 0.25 * q3;
             let dwdq = -0.75 * q3;
             (w, dwdq)
@@ -71,7 +64,7 @@ pub fn search_near_particles(
     particles: &mut [Particle<DIM>],
     neigh_lists: &mut [Neighbor<DIM>],
 ) -> Result<usize> {
-    let smooth_length_squared = (2.0 * SMOOTH_LENGTH).powf(2.0);
+    let smooth_length_squared = (2.0 * SMOOTH_LENGTH).simd_powf(2.0);
     let (min_x, min_y, min_z, grid) = cll_property(particles);
 
     // i -> j loop
@@ -94,30 +87,29 @@ pub fn search_near_particles(
                     )) {
                         for &j in neighbors {
                             if i != j {
-                                let d = distance(&particles[i].x, &particles[j].x);
+                                let d = particles[i].x.metric_distance(&particles[j].x);
 
                                 if total_pair >= MAX_NEAR_SUM {
                                     bail!("Exceeded the maximum number of pair particles.");
                                 }
 
                                 // If the distance is valid, add as a neighboring pair
-                                if d < smooth_length_squared {
+                                if d < smooth_length_squared.simd_sqrt() {
                                     total_pair += 1;
 
                                     // Store pair particles
                                     neigh_lists[total_pair].i = i;
                                     neigh_lists[total_pair].j = j;
 
-                                    let r = d.sqrt();
-                                    let q = r / SMOOTH_LENGTH;
+                                    let q = d / SMOOTH_LENGTH;
 
                                     let (w, dwdq) = b_spline_kernel(q);
                                     let mut dwdr = [dwdq / SMOOTH_LENGTH; DIM];
 
                                     // x/r = base vector
-                                    dwdr[0] *= particles[i].x[0] / r;
-                                    dwdr[1] *= particles[i].x[1] / r;
-                                    dwdr[2] *= particles[i].x[2] / r;
+                                    dwdr[0] *= particles[i].x[0] / d;
+                                    dwdr[1] *= particles[i].x[1] / d;
+                                    dwdr[2] *= particles[i].x[2] / d;
 
                                     neigh_lists[total_pair].w = w;
                                     neigh_lists[total_pair].dwdr = dwdr;
