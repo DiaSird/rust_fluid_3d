@@ -7,8 +7,8 @@ use nalgebra::{self as na, SimdComplexField};
 pub trait _SphStd {
     fn sph_std(
         &mut self,
-        particles: &mut [Particle<DIM>],
-        neighbors: &mut [Neighbor<DIM>],
+        particles: &[Particle<DIM>],
+        neighbors: &[Neighbor<DIM>],
         i: usize,
     ) -> Result<()>;
 }
@@ -17,14 +17,14 @@ pub trait _SphStd {
 pub trait SphDiff {
     fn _sph_grad(
         &mut self,
-        particles: &mut [Particle<DIM>],
-        neighbors: &mut [Neighbor<DIM>],
+        particles: &[Particle<DIM>],
+        neighbors: &[Neighbor<DIM>],
         i: usize,
     ) -> Result<()>;
     fn sph_div(
         &mut self,
-        particles: &mut [Particle<DIM>],
-        neighbors: &mut [Neighbor<DIM>],
+        particles: &[Particle<DIM>],
+        neighbors: &[Neighbor<DIM>],
         i: usize,
     ) -> Result<()>;
 }
@@ -49,8 +49,8 @@ impl<const D: usize> Velocity<D> {
 impl<const D: usize> SphDiff for Velocity<D> {
     fn _sph_grad(
         &mut self,
-        _particles: &mut [Particle<DIM>],
-        _neighbors: &mut [Neighbor<DIM>],
+        _particles: &[Particle<DIM>],
+        _neighbors: &[Neighbor<DIM>],
         _i: usize,
     ) -> Result<()> {
         Ok(())
@@ -59,8 +59,8 @@ impl<const D: usize> SphDiff for Velocity<D> {
     // Todo: Generic Vector (velocity -> vector3)
     fn sph_div(
         &mut self,
-        particles: &mut [Particle<DIM>],
-        neighbors: &mut [Neighbor<DIM>],
+        particles: &[Particle<DIM>],
+        neighbors: &[Neighbor<DIM>],
         i: usize,
     ) -> Result<()> {
         if i >= particles.len() {
@@ -111,17 +111,18 @@ impl Tensor<DIM> {
 impl SphDiff for Tensor<DIM> {
     fn _sph_grad(
         &mut self,
-        _particles: &mut [Particle<DIM>],
-        _neighbors: &mut [Neighbor<DIM>],
+        _particles: &[Particle<DIM>],
+        _neighbors: &[Neighbor<DIM>],
         _i: usize,
     ) -> Result<()> {
+        // No-need to impl
         Ok(())
     }
 
     fn sph_div(
         &mut self,
-        particles: &mut [Particle<DIM>],
-        neighbors: &mut [Neighbor<DIM>],
+        particles: &[Particle<DIM>],
+        neighbors: &[Neighbor<DIM>],
         i: usize,
     ) -> Result<()> {
         if i >= particles.len() {

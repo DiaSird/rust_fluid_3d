@@ -4,6 +4,7 @@ use super::{
 };
 use anyhow::{Ok, Result};
 use nalgebra::{self as na, SimdComplexField};
+use rayon::prelude::*;
 
 // For water
 pub fn tait_eq(particle: &mut Particle<DIM>) -> f64 {
@@ -18,11 +19,11 @@ pub fn tait_eq(particle: &mut Particle<DIM>) -> f64 {
 pub fn static_stress(particles: &mut [Particle<DIM>]) {
     let identity: na::Matrix3<f64> = na::Matrix3::identity();
 
-    for particle in particles.iter_mut() {
+    particles.par_iter_mut().for_each(|particle| {
         // p = p * identity matrix
         let p = -tait_eq(particle) * identity;
         particle.stress += p;
-    }
+    });
 }
 
 pub fn viscosity_stress(

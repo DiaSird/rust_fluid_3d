@@ -75,7 +75,6 @@ pub fn sph(
     write_result(step, &particles[0..n])?;
 
     // --- Simulation loop
-    // let mut step: usize = 1; // initial step
     while step <= max_step {
         dt = cfl_dt(dt, &mut particles[0..n]).context("Failed: CFL condition")?;
         boundary_condition(&mut particles[0..n]).context("Failed: boundary condition")?;
