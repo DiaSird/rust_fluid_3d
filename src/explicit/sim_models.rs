@@ -123,7 +123,10 @@ fn make_box_model(particles: &mut [Particle<DIM>]) -> Result<usize> {
             for k in 0..=NZ {
                 // Check if we exceed the maximum number of particles
                 if n >= particles.len() {
-                    bail!("Exceeded the maximum number of particles.");
+                    bail!(
+                        "Exceeded the maximum number of particles >= {}.",
+                        particles.len()
+                    );
                 }
 
                 // Set particle location

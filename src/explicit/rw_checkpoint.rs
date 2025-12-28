@@ -1,0 +1,84 @@
+use crate::explicit::parameters::Particle;
+use anyhow::Result;
+use postcard;
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{Read, Write};
+
+#[derive(Serialize, Deserialize)]
+pub struct State<const D: usize> {
+    pub step: usize,
+    pub time: f64,
+    pub dt: f64,
+    pub n: usize,
+    pub particles: Vec<Particle<D>>,
+}
+
+pub fn load_checkpoint<const D: usize>(path: &str) -> Result<State<D>> {
+    let mut file = File::open(path)?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let state: State<D> = postcard::from_bytes(&buf)?;
+    Ok(state)
+}
+
+pub fn write_checkpoint<const D: usize>(
+    path: &str,
+    state: &State<D>,
+    buffer_size: usize,
+) -> anyhow::Result<()> {
+    let mut buf: Vec<u8> = vec![0u8; buffer_size];
+    let used = postcard::to_slice(state, &mut buf)?.len();
+    let mut file = File::create(path)?;
+
+    file.write_all(&buf[..used])?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::explicit::parameters::{Fluid, Particle, DIM};
+    use std::fs;
+
+    #[test]
+    fn test_checkpoint_roundtrip() {
+        // Write and read bin
+        let test_file = "test_checkpoint.bin";
+
+        let n = 3;
+        let water = Fluid::Water;
+        let particles: Vec<Particle<DIM>> = (0..n).map(|_| Particle::new(water)).collect();
+
+        let step = 42;
+        let time = 1.23;
+        let dt = 0.01;
+
+        let state = State {
+            step,
+            time,
+            dt,
+            n,
+            particles: particles.clone(),
+        };
+
+        write_checkpoint(test_file, &state, 1024 * 120).expect("write failed");
+
+        let state = load_checkpoint::<DIM>(test_file).expect("load failed");
+        let loaded_step = state.step;
+        let loaded_time = state.time;
+        let loaded_dt = state.dt;
+        let loaded_n = state.n;
+        let loaded_particles = state.particles;
+
+        assert_eq!(loaded_step, step);
+        assert_eq!(loaded_time, time);
+        assert_eq!(loaded_dt, dt);
+        assert_eq!(loaded_n, n);
+        assert_eq!(loaded_particles.len(), n);
+        assert_eq!(loaded_particles, particles);
+
+        fs::remove_file(test_file).unwrap();
+    }
+}

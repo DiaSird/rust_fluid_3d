@@ -1,3 +1,5 @@
+// use crate::explicit::rw_checkpoint::{load_checkpoint, write_checkpoint};
+
 use super::{
     acceleration::update_acceleration,
     artificial_viscosity::update_artificial_viscosity,
@@ -6,6 +8,7 @@ use super::{
     density::update_density,
     neighboring_lists::search_near_particles,
     parameters::{Fluid, NeighboringList as Neighbor, Particle, DIM, MAX_N, MAX_NEAR_SUM},
+    rw_checkpoint,
     sim_models::make_model,
     smoothing::conservative_smoothing,
     sph_utils::{Tensor, Velocity},
@@ -16,14 +19,45 @@ use super::{
 use anyhow::{Context, Ok, Result};
 
 // SPH Main function
-pub fn sph(mut dt: f64, out_step: usize, max_step: usize) -> Result<()> {
+pub fn sph(
+    mut dt: f64,
+    out_step: usize,
+    max_step: usize,
+    restart_file: Option<&str>,
+) -> Result<()> {
     // Initialize
     let mut time = 0.0;
     let water = Fluid::Water;
     let _ = Fluid::Air;
 
+    let mut particles: Vec<Particle<DIM>>;
+    let mut step: usize;
+
     // Model particles
-    let mut particles: Vec<Particle<DIM>> = (0..MAX_N).map(|_| Particle::new(water)).collect();
+    if let Some(file) = restart_file {
+        // Load checkpoint
+        let state = rw_checkpoint::load_checkpoint::<DIM>(file)?;
+
+        // restore next steps
+        particles = state.particles;
+        time = state.time;
+        dt = state.dt;
+        step = state.step + 1;
+
+        println!(
+            "Restarted from checkpoint {} at step {}, time {:.3} [ms]",
+            file,
+            state.step,
+            time * 1000.0
+        );
+    } else {
+        // Initialize
+        particles = (0..MAX_N).map(|_| Particle::new(water)).collect();
+        step = 1;
+    }
+
+    // Neighbor particles
+    // let mut particles: Vec<Particle<DIM>> = (0..MAX_N).map(|_| Particle::new(water)).collect();
     let mut neighbors: Vec<Neighbor<DIM>> = (0..MAX_NEAR_SUM).map(|_| Neighbor::new()).collect();
 
     // Gradient and div particles
@@ -37,8 +71,11 @@ pub fn sph(mut dt: f64, out_step: usize, max_step: usize) -> Result<()> {
     let k = search_near_particles(&mut particles[0..n], &mut neighbors)
         .context("Failed: searching near particles")?;
 
+    display_result(step, time, &particles[0..n])?;
+    write_result(step, &particles[0..n])?;
+
     // --- Simulation loop
-    let mut step: usize = 1; // initial step
+    // let mut step: usize = 1; // initial step
     while step <= max_step {
         dt = cfl_dt(dt, &mut particles[0..n]).context("Failed: CFL condition")?;
         boundary_condition(&mut particles[0..n]).context("Failed: boundary condition")?;
@@ -76,10 +113,20 @@ pub fn sph(mut dt: f64, out_step: usize, max_step: usize) -> Result<()> {
 
         if step % out_step == 0 {
             display_result(step, time, &particles[0..n])?;
-        }
-
-        if step % out_step == 0 {
             write_result(step, &particles[0..n])?;
+            let state = rw_checkpoint::State {
+                step,
+                time,
+                dt,
+                n,
+                particles: particles[0..n].to_vec(),
+            };
+            rw_checkpoint::write_checkpoint(
+                &format!("results/checkpoint.bin"),
+                // &format!("results/checkpoint_{:08}.bin", step),
+                &state,
+                1024 * 10000,
+            )?;
         }
 
         time += dt;

@@ -29,7 +29,8 @@ pub fn write_velocity_to_csv(step: usize, particles: &[Particle<DIM>]) -> Result
 }
 
 pub fn display_result(step: usize, time: f64, particles: &[Particle<DIM>]) -> Result<()> {
-    let i: usize = 10;
+    // let i: usize = 10;
+    let i: usize = 1000;
     let (x, y, z) = particles[i].axis();
     let (vx, vy, vz) = particles[i].velocity();
     let (ax, ay, az) = particles[i].accel();
