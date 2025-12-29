@@ -24,5 +24,5 @@ pub(crate) async fn set_model_config(config: Config) -> Result<(), String> {
     let _ = std::fs::create_dir_all("./results");
     log::info!("config = {:?}", config);
 
-    sph(dt, out_step, max_step, None).map_err(|e| e.to_string())
+    sph(dt, out_step, max_step, Some("results/checkpoint.bin")).map_err(|e| e.to_string())
 }

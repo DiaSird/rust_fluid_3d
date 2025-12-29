@@ -14,7 +14,7 @@ readme.workspace = true
 [dependencies]
 anyhow = "1.0.93"
 rayon = "1.10.0"
-nalgebra = { version = "0.33.2", features = ["serde-serialize"] }
+nalgebra = { version = "0.33.2", features = ["serde-serialize", "rayon"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0"
 csv = "1.1"
