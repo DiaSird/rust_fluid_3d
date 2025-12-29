@@ -5,8 +5,11 @@ release: fmt clippy run
 build:
 	cargo build
 
-ui:
+dev:
 	cd gui && npm run tauri dev
+
+ui:
+	cd gui && npm run tauri build
 
 run:
 	cargo run
