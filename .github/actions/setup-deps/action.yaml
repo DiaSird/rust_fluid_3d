@@ -53,20 +53,6 @@ runs:
       with:
         prefix-key: cargo-${{ inputs.build_profile }}-${{ inputs.platform }}-${{ inputs.cache_key_suffix }}
 
-    - name: Sync node version and setup cache
-      if: ${{ inputs.install_front_deps == 'true' }}
-      uses: actions/setup-node@v4.4.0
-      with:
-        node-version: "lts/*"
-        cache: "npm"
-
-    - name: Next.js cache
-      if: ${{ inputs.install_front_deps == 'true' }}
-      uses: actions/cache@v4.2.3
-      with:
-        path: ${{ github.workspace }}/gui/.next/cache
-        key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('gui/src/**/*.[jt]s', 'gui/src/**/*.[jt]sx') }}
-        restore-keys: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
     - name: Install frontend dependencies
       if: ${{ inputs.install_front_deps == 'true' }}
       shell: bash
