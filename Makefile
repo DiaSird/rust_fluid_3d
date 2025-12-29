@@ -15,4 +15,4 @@ fmt:
 	cargo fmt --all
 
 clippy:
-	cargo clippy --fix --allow-staged --allow-dirty
+	cargo clippy --workspace --fix --allow-staged --allow-dirty

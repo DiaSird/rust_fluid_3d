@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 pub fn update_artificial_viscosity(
     particles: &mut [Particle<DIM>],
-    neighbors: &mut [Neighbor<DIM>],
+    neighbors: &[Neighbor<DIM>],
 ) -> Result<()> {
     let n = particles.len();
 
@@ -16,7 +16,7 @@ pub fn update_artificial_viscosity(
             || vec![na::Matrix3::zeros(); n], // thread-local buffer
             |mut local_buf, neigh| {
                 // Average
-                let rhoij = 0.5 * (particles[neigh.i].rho + particles[neigh.j].rho);
+                let rho_ij = 0.5 * (particles[neigh.i].rho + particles[neigh.j].rho);
                 let cij = 0.5 * (particles[neigh.i].sound_v + particles[neigh.j].sound_v);
 
                 // Relative distance
@@ -27,9 +27,10 @@ pub fn update_artificial_viscosity(
 
                 let v_dot_x = vij.dot(&xij);
                 if v_dot_x < 0.0 {
-                    let coef = v_dot_x / (xij.dot(&xij) + (0.1 * SMOOTH_LENGTH).powi(2));
+                    let coef =
+                        v_dot_x / (0.1 * SMOOTH_LENGTH).mul_add(0.1 * SMOOTH_LENGTH, xij.dot(&xij));
                     let identity = na::Matrix3::identity();
-                    let coef_val = (-BETA * cij * coef + BETA * coef.powi(2)) / rhoij;
+                    let coef_val = (-BETA * cij).mul_add(coef, BETA * coef.powi(2)) / rho_ij;
 
                     // add stress contributions to local buffer
                     local_buf[neigh.i] += coef_val * identity;

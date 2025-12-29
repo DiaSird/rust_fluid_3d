@@ -18,7 +18,9 @@ use super::{
 };
 use anyhow::{Context, Ok, Result};
 
-// SPH Main function
+/// SPH Main function
+/// # Errors
+/// MAX Particles < N
 pub fn sph(
     mut dt: f64,
     out_step: usize,
@@ -76,7 +78,7 @@ pub fn sph(
 
     // --- Simulation loop
     while step <= max_step {
-        dt = cfl_dt(dt, &mut particles[0..n]).context("Failed: CFL condition")?;
+        dt = cfl_dt(dt, &particles[0..n]).context("Failed: CFL condition")?;
         boundary_condition(&mut particles[0..n]).context("Failed: boundary condition")?;
 
         update_half_velocity(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
@@ -85,12 +87,12 @@ pub fn sph(
         update_density(
             dt,
             &mut particles[0..n],
-            &mut neighbors[0..k],
+            &neighbors[0..k],
             &mut diff_velocity[0..n],
         )
         .context("Failed: updating density")?;
 
-        update_artificial_viscosity(&mut particles[0..n], &mut neighbors[0..k])
+        update_artificial_viscosity(&mut particles[0..n], &neighbors[0..k])
             .context("Failed: updating artificial viscosity")?;
         update_stress(
             &mut particles[0..n],
@@ -101,13 +103,13 @@ pub fn sph(
 
         update_acceleration(
             &mut particles[0..n],
-            &mut neighbors[0..k],
+            &neighbors[0..k],
             &mut diff_stress[0..n],
         )
         .context("Failed: updating acceleration")?;
         update_half_velocity(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
 
-        conservative_smoothing(&mut particles[0..n], &mut neighbors[0..k])
+        conservative_smoothing(&mut particles[0..n], &neighbors[0..k])
             .context("Failed: conservative smoothing")?;
 
         if step.is_multiple_of(out_step) {

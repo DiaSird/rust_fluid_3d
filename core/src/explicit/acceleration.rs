@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 pub fn update_acceleration(
     particles: &mut [Particle<DIM>],
-    neighbors: &mut [Neighbor<DIM>],
+    neighbors: &[Neighbor<DIM>],
     diff_stress: &mut [Tensor<DIM>],
 ) -> Result<()> {
     let n = particles.len();
@@ -33,6 +33,7 @@ pub fn update_acceleration(
 
             // store into thread-safe buffer
             {
+                #[allow(clippy::unwrap_used)]
                 let mut buf = dvdt_buf.write().unwrap();
                 buf[i] = dvdt;
             }
@@ -41,8 +42,8 @@ pub fn update_acceleration(
         })?;
 
     // merge buffer into particles
-    let buf = dvdt_buf.read().unwrap();
-    for (i, dv) in buf.iter().enumerate() {
+    #[allow(clippy::unwrap_used, clippy::unwrap_in_result)]
+    for (i, dv) in dvdt_buf.read().unwrap().iter().enumerate() {
         if dv.dot(dv).is_nan() {
             bail!("dv/dt has NaN on particle {}", i);
         }

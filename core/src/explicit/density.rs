@@ -9,7 +9,7 @@ use rayon::prelude::*;
 pub fn update_density(
     dt: f64,
     particles: &mut [Particle<DIM>],
-    neighbors: &mut [Neighbor<DIM>],
+    neighbors: &[Neighbor<DIM>],
     diff_velocity: &mut [Velocity<DIM>],
 ) -> Result<()> {
     // Total particles

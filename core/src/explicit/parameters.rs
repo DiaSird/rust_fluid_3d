@@ -101,9 +101,11 @@ impl<const DIM: usize> Particle<DIM> {
     pub fn new(fluid: Fluid) -> Self {
         // Initial temperature and sound speed
         let temperature: f64 = 273.15 + 20.0;
-        let sound_air = 331.3 + (0.6 * (temperature - 273.15));
-        let sound_water =
-            1402.4 + 5.04 * (temperature - 273.15) - 0.057 * (temperature - 273.15).simd_powf(2.0);
+        let sound_air = 0.6_f64.mul_add(temperature - 273.15, 331.3);
+        let sound_water = 0.057_f64.mul_add(
+            -(temperature - 273.15).simd_powf(2.0),
+            5.04_f64.mul_add(temperature - 273.15, 1402.4),
+        );
 
         // Fluid properties
         let (rho, viscosity, sound_v) = match fluid {
@@ -116,7 +118,7 @@ impl<const DIM: usize> Particle<DIM> {
         let rho0 = rho;
 
         // set a new particle
-        Particle {
+        Self {
             pair: 0,
             volume: LENGTH * WIDTH * HEIGHT,
             rho0,
@@ -167,7 +169,7 @@ pub struct NeighboringList<const DIM: usize> {
 
 impl<const DIM: usize> NeighboringList<DIM> {
     pub fn new() -> Self {
-        NeighboringList {
+        Self {
             i: 0,
             j: 0,
             w: 0.0,

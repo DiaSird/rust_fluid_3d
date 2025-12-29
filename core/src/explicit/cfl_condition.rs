@@ -1,7 +1,7 @@
 use super::parameters::{Particle, DIM, SMOOTH_LENGTH};
 use anyhow::{Ok, Result};
 
-pub fn cfl_dt(mut dt: f64, particles: &mut [Particle<DIM>]) -> Result<f64> {
+pub fn cfl_dt(mut dt: f64, particles: &[Particle<DIM>]) -> Result<f64> {
     // get max velocity
     let v_max: Option<f64> = particles
         .iter()

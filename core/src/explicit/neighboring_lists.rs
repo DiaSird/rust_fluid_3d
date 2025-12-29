@@ -11,8 +11,8 @@ pub fn b_spline_kernel(q: f64) -> (f64, f64) {
     match q {
         0.0..=1.0 => {
             let q2 = q.simd_powf(2.0);
-            let w = 1.0 - 1.5 * q2 + 0.75 * q2 * q;
-            let dwdq = -3.0 * q + 2.25 * q2;
+            let w = (0.75 * q2).mul_add(q, 1.5_f64.mul_add(-q2, 1.0));
+            let dwdq = (-3.0_f64).mul_add(q, 2.25 * q2);
             (w, dwdq)
         }
         1.0..=2.0 => {
@@ -27,11 +27,11 @@ pub fn b_spline_kernel(q: f64) -> (f64, f64) {
 
 type Grid = HashMap<(usize, usize, usize), Vec<usize>>;
 
-pub fn cll_property(particles: &mut [Particle<DIM>]) -> (f64, f64, f64, Grid) {
+pub fn cll_property(particles: &[Particle<DIM>]) -> (f64, f64, f64, Grid) {
     // HashMap for cell layout
     let mut grid: Grid = HashMap::new();
 
-    fn min_location(particles: &mut [Particle<DIM>], index: usize) -> f64 {
+    fn min_location(particles: &[Particle<DIM>], index: usize) -> f64 {
         particles
             .iter()
             .map(|p| p.x[index])

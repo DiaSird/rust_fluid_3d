@@ -39,7 +39,7 @@ pub struct Velocity<const D: usize> {
 
 impl<const D: usize> Velocity<D> {
     pub fn new() -> Self {
-        Velocity {
+        Self {
             grad_v: na::Matrix3::zeros(),
             div_v: 0.0,
         }
@@ -101,7 +101,7 @@ pub struct Tensor<const D: usize> {
 }
 
 impl Tensor<DIM> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Tensor {
             div_tensor: [0.0; DIM],
         }

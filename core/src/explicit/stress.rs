@@ -7,7 +7,7 @@ use nalgebra::{self as na, SimdComplexField};
 use rayon::prelude::*;
 
 // For water
-pub fn tait_eq(particle: &mut Particle<DIM>) -> f64 {
+pub fn tait_eq(particle: &Particle<DIM>) -> f64 {
     let gamma = 7.0; // parameter of Tait eq.
     let b = particle.sound_v.simd_powf(2.0) / gamma; // parameter of Tait eq.
     let rho_ratio = particle.rho / particle.rho0;
@@ -54,12 +54,6 @@ pub fn viscosity_stress(
         particles[neigh.i].stress = grad_vi + grad_vi.transpose();
         particles[neigh.j].stress = grad_vj + grad_vj.transpose();
     }
-
-    // // Calculate grad(velocity)
-    // for (i, v) in diff_velocity.iter_mut().enumerate().take(n) {
-    //     v.sph_grad(particles, neighbors, i)
-    //         .context("Failed: grad-v in updating stress")?;
-    // }
 
     // Viscosity stress
     for (i, v) in diff_velocity.iter_mut().enumerate().take(n) {

@@ -3,7 +3,7 @@ use anyhow::Result;
 use postcard;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
 pub struct State<const D: usize> {
@@ -15,10 +15,7 @@ pub struct State<const D: usize> {
 }
 
 pub fn load_checkpoint<const D: usize>(path: &str) -> Result<State<D>> {
-    let mut file = File::open(path)?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
+    let buf = std::fs::read(path)?;
     let state: State<D> = postcard::from_bytes(&buf)?;
     Ok(state)
 }
@@ -28,7 +25,7 @@ pub fn write_checkpoint<const D: usize>(
     state: &State<D>,
     buffer_size: usize,
 ) -> anyhow::Result<()> {
-    let mut buf: Vec<u8> = vec![0u8; buffer_size];
+    let mut buf: Vec<u8> = vec![0_u8; buffer_size];
     let used = postcard::to_slice(state, &mut buf)?.len();
     let mut file = File::create(path)?;
 
@@ -73,8 +70,8 @@ mod tests {
         let loaded_particles = state.particles;
 
         assert_eq!(loaded_step, step);
-        assert_eq!(loaded_time, time);
-        assert_eq!(loaded_dt, dt);
+        assert!((loaded_time - time).abs() < 1e-10);
+        assert!((loaded_dt - dt).abs() < 1e-10);
         assert_eq!(loaded_n, n);
         assert_eq!(loaded_particles.len(), n);
         assert_eq!(loaded_particles, particles);
