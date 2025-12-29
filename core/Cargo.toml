@@ -1,7 +1,15 @@
 [package]
 name = "rust_fluid_3d"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+description.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+keywords.workspace = true
+readme.workspace = true
 
 [dependencies]
 anyhow = "1.0.93"

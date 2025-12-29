@@ -53,7 +53,7 @@ jobs:
           name: rust_fluid_3d-results-${{runner.os}}
           path: |
             ${{ github.workspace }}/results/*.csv
-            ${{ github.workspace }}/targets/release/terra
+            ${{ github.workspace }}/target/release/terra
 
       - name: Upload a Build Artifact for windows
         if: ${{ matrix.platform == 'windows-latest' }}
@@ -62,7 +62,7 @@ jobs:
           name: rust_fluid_3d-results-${{runner.os}}
           path: |
             ${{ github.workspace }}/results/*.csv
-            ${{ github.workspace }}/targets/release/terra.exe
+            ${{ github.workspace }}/target/release/terra.exe
 
   # test:
   #     runs-on: ubuntu-latest
