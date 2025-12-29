@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+// import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { type OpenDialogOptions, open } from "@tauri-apps/plugin-dialog";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { runSimulation } from "./cmd";
 
 type OpenOptions = {
   /**
@@ -170,27 +171,28 @@ export default function ThreeView() {
       return;
     }
 
-    const paramObj = {
-      LENGTH: sizeX,
-      WIDTH: sizeY,
-      HEIGHT: sizeZ,
-      PARTICLES_PER_AXIS: particlesPerAxis,
-      SMOOTH_LENGTH: smoothLength,
-      CELL_SIZE: cellSize,
-      BETA: beta,
-      CS_RATE: csRate,
-      DX: dx,
-      DY: dy,
-      DZ: dz,
+    const config = {
+      length: sizeX,
+      width: sizeY,
+      height: sizeZ,
+      n_axis: particlesPerAxis,
+      smooth_length: smoothLength,
+      cell_size: cellSize,
+      beta: beta,
+      cs_rate: csRate,
+      dx: dx,
+      dy: dy,
+      dz: dz,
     };
+    await runSimulation(config);
 
-    // Write JSON file
-    await writeTextFile(
-      exportPath,
-      JSON.stringify(paramObj, null, 2),
-      {} as any
-    );
-    alert(`Parameters exported: ${exportPath}`);
+    //   // Write JSON file
+    //   await writeTextFile(
+    //     exportPath,
+    //     JSON.stringify(config, null, 2),
+    //     {} as any
+    //   );
+    //   alert(`Parameters exported: ${exportPath}`);
   };
 
   return (

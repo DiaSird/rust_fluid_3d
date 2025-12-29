@@ -4276,6 +4276,7 @@ name = "terra"
 version = "0.1.0"
 dependencies = [
  "log",
+ "rust_fluid_3d",
  "serde",
  "serde_json",
  "tauri",

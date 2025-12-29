@@ -24,6 +24,7 @@ tauri = { version = "2.9.5", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
+rust_fluid_3d = { workspace = true }
 
 [lints]
 workspace = true
