@@ -46,7 +46,7 @@ pub fn update_acceleration(
         if dv.dot(dv).is_nan() {
             bail!("dv/dt has NaN on particle {}", i);
         }
-        particles[i].dvdt = (*dv).into();
+        particles[i].dvdt = *dv;
     }
 
     Ok(())

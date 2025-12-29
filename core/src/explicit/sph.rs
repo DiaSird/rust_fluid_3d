@@ -110,7 +110,7 @@ pub fn sph(
         conservative_smoothing(&mut particles[0..n], &mut neighbors[0..k])
             .context("Failed: conservative smoothing")?;
 
-        if step % out_step == 0 {
+        if step.is_multiple_of(out_step) {
             display_result(step, time, &particles[0..n])?;
             write_result(step, &particles[0..n])?;
             let state = rw_checkpoint::State {
@@ -121,7 +121,7 @@ pub fn sph(
                 particles: particles[0..n].to_vec(),
             };
             rw_checkpoint::write_checkpoint(
-                &format!("results/checkpoint.bin"),
+                "results/checkpoint.bin",
                 // &format!("results/checkpoint_{:08}.bin", step),
                 &state,
                 1024 * 10000,

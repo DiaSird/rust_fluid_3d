@@ -107,7 +107,7 @@ pub fn search_near_particles(
                                     let (w, dwdq) = b_spline_kernel(q);
                                     let mut dwdr = na::Vector::from([dwdq / SMOOTH_LENGTH; DIM]);
 
-                                    // x/r = base vector
+                                    // multiply dwdr by base vector: ei = x/r
                                     dwdr[0] *= particles[i].x[0] / d;
                                     dwdr[1] *= particles[i].x[1] / d;
                                     dwdr[2] *= particles[i].x[2] / d;
@@ -127,13 +127,13 @@ pub fn search_near_particles(
         bail!("Total pair particle is zero.");
     }
 
-    make_neiboring_list(particles, &neigh_lists[0..total_pair]);
+    make_neighboring_list(particles, &neigh_lists[0..total_pair]);
     write_kernel_to_csv(particles, &neigh_lists[0..total_pair])?;
 
     Ok(total_pair)
 }
 
-pub fn make_neiboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neighbor<DIM>]) {
+pub fn make_neighboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neighbor<DIM>]) {
     for (pair, neigh) in neighbors.iter().enumerate() {
         // calculate pair numbers per one particle
         particles[neigh.i].pair = pair;

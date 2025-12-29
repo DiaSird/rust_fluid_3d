@@ -25,7 +25,7 @@ pub fn cavity_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
             p.v[0] = U_LID;
             p.v[1] = 0.0;
             p.v[2] = 0.0;
-        } else if x < DX || x > LENGTH - DX || y < DY || z < DZ || z > HEIGHT - DZ {
+        } else if !(DX..=LENGTH - DX).contains(&x) || y < DY || !(DZ..=HEIGHT - DZ).contains(&z) {
             p.v[0] = 0.0;
             p.v[1] = 0.0;
             p.v[2] = 0.0;
@@ -44,7 +44,7 @@ pub fn poiseuille_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
         p.v[2] = 0.0;
 
         // no-slip
-        if y < DY || y > WIDTH - DY {
+        if !(DY..=WIDTH - DY).contains(&y) {
             p.v[0] = 0.0;
             p.v[1] = 0.0;
             p.v[2] = 0.0;

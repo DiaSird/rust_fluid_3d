@@ -76,7 +76,7 @@ pub struct Particle<const DIM: usize> {
     /// density [kg/m^3]
     pub rho: f64,
     /// viscosity [Pa*s]
-    pub visco: f64,
+    pub viscosity: f64,
     /// sound velocity [m/s]
     pub sound_v: f64,
     /// location vector [m]
@@ -106,7 +106,7 @@ impl<const DIM: usize> Particle<DIM> {
             1402.4 + 5.04 * (temperature - 273.15) - 0.057 * (temperature - 273.15).simd_powf(2.0);
 
         // Fluid properties
-        let (rho, visco, sound_v) = match fluid {
+        let (rho, viscosity, sound_v) = match fluid {
             Fluid::Water => (1000.0, 0.001, sound_water),
             // Fluid::Water => (1000.0, 1.0, sound_water),
             Fluid::Air => (1.225, 0.0000181, sound_air),
@@ -121,7 +121,7 @@ impl<const DIM: usize> Particle<DIM> {
             volume: LENGTH * WIDTH * HEIGHT,
             rho0,
             rho,
-            visco,
+            viscosity,
             sound_v,
             x: Vector::<DIM>::zeros(),
             v: Vector::<DIM>::zeros(),

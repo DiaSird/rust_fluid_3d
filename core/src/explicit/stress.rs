@@ -65,7 +65,7 @@ pub fn viscosity_stress(
     for (i, v) in diff_velocity.iter_mut().enumerate().take(n) {
         // Viscosity stress
         particles[i].stress += -&identity * v.div_v * 2.0 / 3.0;
-        particles[i].stress *= particles[i].visco;
+        particles[i].stress *= particles[i].viscosity;
     }
 }
 
