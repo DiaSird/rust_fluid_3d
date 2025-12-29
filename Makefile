@@ -9,7 +9,7 @@ dev:
 	cd gui && npm run tauri dev
 
 ui:
-	cd gui && npm run tauri build
+	cd gui && npm run tauri build --no-bundle 
 
 run:
 	cargo run
