@@ -9,6 +9,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  APP_NAME: terra
+  BUILD_PROFILE: release
+
 jobs:
   lint:
     strategy:
@@ -46,23 +50,21 @@ jobs:
           build_profile: release
           install_front_deps: true
       - run: make ui
-      - name: Upload a Build Artifact for linux
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v4.4.0
-        with:
-          name: rust_fluid_3d-results-${{runner.os}}
-          path: |
-            ${{ github.workspace }}/results/*.csv
-            ${{ github.workspace }}/target/release/terra
 
-      - name: Upload a Build Artifact for windows
-        if: ${{ matrix.platform == 'windows-latest' }}
-        uses: actions/upload-artifact@v4.4.0
+      - name: Move exe -> ./build
+        uses: ./.github/actions/setup-release
         with:
-          name: rust_fluid_3d-results-${{runner.os}}
+          app_name: ${{ env.APP_NAME }}
+          build_profile: ${{ env.BUILD_PROFILE }}
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ${{ env.APP_NAME }}-${{ runner.os }}
+          # to include .keep file
+          include-hidden-files: true
           path: |
-            ${{ github.workspace }}/results/*.csv
-            ${{ github.workspace }}/target/release/terra.exe
+            ./build/
 
   # test:
   #     runs-on: ubuntu-latest
