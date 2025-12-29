@@ -1,4 +1,4 @@
-use super::parameters::{Particle, DIM, SMOOTH_LENGTH};
+use super::parameters::{DIM, Particle, SMOOTH_LENGTH};
 use anyhow::{Ok, Result};
 
 pub fn cfl_dt(mut dt: f64, particles: &[Particle<DIM>]) -> Result<f64> {

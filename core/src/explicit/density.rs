@@ -1,5 +1,5 @@
 use super::{
-    parameters::{NeighboringList as Neighbor, Particle, DIM},
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
     sph_utils::Velocity,
 };
 use crate::explicit::sph_utils::SphDiff;

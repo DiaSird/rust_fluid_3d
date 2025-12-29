@@ -1,8 +1,8 @@
 use super::{
-    parameters::{NeighboringList as Neighbor, Particle, DIM},
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
     sph_utils::{SphDiff, Tensor},
 };
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use nalgebra as na;
 use rayon::prelude::*;
 

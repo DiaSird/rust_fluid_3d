@@ -1,7 +1,7 @@
 use super::parameters::{
-    NeighboringList as Neighbor, Particle, CELL_SIZE, DIM, MAX_NEAR_SUM, SMOOTH_LENGTH,
+    CELL_SIZE, DIM, MAX_NEAR_SUM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH,
 };
-use anyhow::{bail, Context as _, Result};
+use anyhow::{Context as _, Result, bail};
 use nalgebra as na;
 use nalgebra::SimdComplexField;
 use std::collections::HashMap;

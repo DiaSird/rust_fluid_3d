@@ -1,5 +1,5 @@
-use super::parameters::{Particle, DIM, DX, DY, DZ, MAX_N, NX, NY, NZ};
-use anyhow::{bail, Context, Result};
+use super::parameters::{DIM, DX, DY, DZ, MAX_N, NX, NY, NZ, Particle};
+use anyhow::{Context, Result, bail};
 use csv::ReaderBuilder;
 use serde::Deserialize;
 

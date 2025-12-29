@@ -7,7 +7,7 @@ use super::{
     cfl_condition::cfl_dt,
     density::update_density,
     neighboring_lists::search_near_particles,
-    parameters::{Fluid, NeighboringList as Neighbor, Particle, DIM, MAX_N, MAX_NEAR_SUM},
+    parameters::{DIM, Fluid, MAX_N, MAX_NEAR_SUM, NeighboringList as Neighbor, Particle},
     rw_checkpoint,
     sim_models::make_model,
     smoothing::conservative_smoothing,

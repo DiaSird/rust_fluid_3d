@@ -1,5 +1,5 @@
-use super::parameters::{NeighboringList as Neighbor, Particle, DIM};
-use anyhow::{bail, Result};
+use super::parameters::{DIM, NeighboringList as Neighbor, Particle};
+use anyhow::{Result, bail};
 use nalgebra::{self as na, SimdComplexField};
 
 // -- Traits --

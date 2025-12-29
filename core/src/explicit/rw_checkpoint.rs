@@ -36,7 +36,7 @@ pub fn write_checkpoint<const D: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::explicit::parameters::{Fluid, Particle, DIM};
+    use crate::explicit::parameters::{DIM, Fluid, Particle};
     use std::fs;
 
     #[test]

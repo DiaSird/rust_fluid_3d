@@ -1,4 +1,4 @@
-use super::parameters::{NeighboringList as Neighbor, Particle, BETA, DIM, SMOOTH_LENGTH};
+use super::parameters::{BETA, DIM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH};
 use anyhow::Result;
 use nalgebra as na;
 use rayon::prelude::*;

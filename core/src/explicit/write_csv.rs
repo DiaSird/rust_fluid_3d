@@ -1,4 +1,4 @@
-use super::parameters::{Particle, DIM};
+use super::parameters::{DIM, Particle};
 use anyhow::{Context, Ok, Result};
 
 pub fn write_result(step: usize, particles: &[Particle<DIM>]) -> Result<()> {

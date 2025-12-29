@@ -1,4 +1,4 @@
-use super::parameters::{Particle, DIM, DX, DY, DZ, HEIGHT, LENGTH, SMOOTH_LENGTH, WIDTH};
+use super::parameters::{DIM, DX, DY, DZ, HEIGHT, LENGTH, Particle, SMOOTH_LENGTH, WIDTH};
 use anyhow::{Ok, Result};
 use rayon::prelude::*;
 

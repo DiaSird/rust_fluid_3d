@@ -1,5 +1,5 @@
-use super::parameters::{Particle, DIM};
-use anyhow::{bail, Ok, Result};
+use super::parameters::{DIM, Particle};
+use anyhow::{Ok, Result, bail};
 use rayon::prelude::*;
 
 pub fn update_half_velocity(dt: f64, particles: &mut [Particle<DIM>]) -> Result<()> {
