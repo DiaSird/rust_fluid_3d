@@ -51,6 +51,8 @@ export default function ThreeView() {
   const [dy, setDy] = useState(0.027);
   const [dz, setDz] = useState(0.027);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const [exportPath, setExportPath] = useState(
     `results/params_${Date.now()}.json`
   );
@@ -235,9 +237,23 @@ export default function ThreeView() {
           <input
             type="number"
             value={particlesPerAxis}
-            onChange={(e) => setParticlesPerAxis(Number(e.target.value))}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+
+              if (value > 500) {
+                setErrorMessage("Particle count per axis must be 500 or less.");
+                return;
+              }
+
+              setErrorMessage(null);
+              setParticlesPerAxis(value);
+            }}
           />
         </label>
+
+        {errorMessage && (
+          <p style={{ color: "red", marginTop: "8px" }}>{errorMessage}</p>
+        )}
         <h3>SPH Parameters</h3>
         <label>
           Smooth length:
