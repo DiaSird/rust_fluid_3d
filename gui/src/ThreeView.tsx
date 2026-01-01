@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-// import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { type OpenDialogOptions, open } from "@tauri-apps/plugin-dialog";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { runSimulation } from "./cmd";
+import { listen } from "@tauri-apps/api/event";
 
 type OpenOptions = {
   /**
@@ -37,6 +37,11 @@ export async function openPath(
 export default function ThreeView() {
   const mountRef = useRef<HTMLDivElement>(null);
 
+  type Tab = "params" | "log";
+  const [activeTab, setActiveTab] = useState<Tab>("params");
+
+  const [logs, setLogs] = useState<string[]>([]);
+
   // Box size and particle count
   const [sizeX, setSizeX] = useState(5);
   const [sizeY, setSizeY] = useState(5);
@@ -51,6 +56,11 @@ export default function ThreeView() {
   const [dx, setDx] = useState(0.027);
   const [dy, setDy] = useState(0.027);
   const [dz, setDz] = useState(0.027);
+
+  // Simulation
+  const [dt, setDt] = useState(0.00001);
+  const [outStep, setOutStep] = useState(10);
+  const [maxStep, setMaxStep] = useState(100);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -72,6 +82,248 @@ export default function ThreeView() {
       ],
     });
   };
+
+  // Tab Header
+  const renderTabHeader = () => (
+    <div
+      style={{
+        display: "flex",
+        background: "#111",
+        borderBottom: "1px solid #333",
+      }}
+    >
+      <button
+        onClick={() => setActiveTab("params")}
+        style={{
+          padding: "8px 16px",
+          background: activeTab === "params" ? "#333" : "transparent",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Parameters
+      </button>
+
+      <button
+        onClick={() => setActiveTab("log")}
+        style={{
+          padding: "8px 16px",
+          background: activeTab === "log" ? "#333" : "transparent",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Log ({logs.length})
+      </button>
+    </div>
+  );
+
+  // GUI Render
+  const renderParams = () => (
+    <div style={{ display: "flex", height: "100%" }}>
+      {/* GUI panel */}
+      <div
+        style={{
+          width: "250px",
+          padding: "10px",
+          background: "#222",
+          color: "#fff",
+          overflowY: "auto",
+        }}
+      >
+        <h3>Box Parameters</h3>
+        <label>
+          Size X [m]:
+          <input
+            type="number"
+            value={sizeX}
+            onChange={(e) => setSizeX(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          Size Y [m]:
+          <input
+            type="number"
+            value={sizeY}
+            onChange={(e) => setSizeY(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          Size Z [m]:
+          <input
+            type="number"
+            value={sizeZ}
+            onChange={(e) => setSizeZ(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          Particles per axis:
+          <input
+            type="number"
+            value={particlesPerAxis}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+
+              if (value > 500) {
+                setErrorMessage("Particle count per axis must be 500 or less.");
+                return;
+              }
+
+              setErrorMessage(null);
+              setParticlesPerAxis(value);
+            }}
+          />
+        </label>
+
+        {errorMessage && (
+          <p style={{ color: "red", marginTop: "8px" }}>{errorMessage}</p>
+        )}
+
+        <h3>SPH Parameters</h3>
+        <label>
+          Smooth length [m]:
+          <input
+            type="number"
+            value={smoothLength}
+            onChange={(e) => setSmoothLength(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          Cell size:
+          <input
+            type="number"
+            value={cellSize}
+            onChange={(e) => setCellSize(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          Beta:
+          <input
+            type="number"
+            value={beta}
+            onChange={(e) => setBeta(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          CS_RATE:
+          <input
+            type="number"
+            value={csRate}
+            onChange={(e) => setCsRate(Number(e.target.value))}
+          />
+        </label>
+        <br />
+
+        <h3>Resolution [m]</h3>
+        <label>
+          DX:
+          <input
+            type="number"
+            value={dx}
+            onChange={(e) => setDx(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          DY:
+          <input
+            type="number"
+            value={dy}
+            onChange={(e) => setDy(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          DZ:
+          <input
+            type="number"
+            value={dz}
+            onChange={(e) => setDz(Number(e.target.value))}
+          />
+        </label>
+        <br />
+
+        <h3>Simulation</h3>
+        <label>
+          Dt [s]:
+          <input
+            type="number"
+            value={dt}
+            onChange={(e) => setDt(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          step to display:
+          <input
+            type="number"
+            value={outStep}
+            onChange={(e) => setOutStep(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <label>
+          max step:
+          <input
+            type="number"
+            value={maxStep}
+            onChange={(e) => setMaxStep(Number(e.target.value))}
+          />
+        </label>
+        <br />
+        <br />
+
+        {/* Pre-display export path */}
+        {/* <button onClick={selectExportPath}>保存先を選択</button> */}
+        <button onClick={selectExportPath}>Set JSON path to export</button>
+        <p style={{ marginTop: "10px", wordBreak: "break-all" }}>
+          JSON Path: {exportPath}
+        </p>
+
+        {/* <button onClick={exportParameters}>計算開始</button> */}
+        <button onClick={exportParameters}>Run</button>
+      </div>
+    </div>
+  );
+
+  // Log Panel
+  const renderLog = () => (
+    <div
+      style={{
+        background: "#111",
+        color: "#0f0",
+        padding: "8px",
+        height: "100%",
+        overflowY: "auto",
+        fontFamily: "monospace",
+        fontSize: "12px",
+      }}
+    >
+      {logs.map((log, i) => (
+        <div key={i} style={{ whiteSpace: "pre-wrap" }}>
+          {log}
+        </div>
+      ))}
+    </div>
+  );
+
+  useEffect(() => {
+    const unlistenPromise = listen<string>("simulation-log", (event) => {
+      setLogs((prev) => [...prev, event.payload]);
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -164,7 +416,7 @@ export default function ThreeView() {
     };
   }, [sizeX, sizeY, sizeZ, particlesPerAxis]);
 
-  // Export parameters to JSON file
+  // Export parameters to JSON file and Run simulation
   const exportParameters = async () => {
     if (!exportPath) {
       alert("保存先パスを選択してください！");
@@ -175,18 +427,24 @@ export default function ThreeView() {
       length: sizeX,
       width: sizeY,
       height: sizeZ,
+
       n_axis: particlesPerAxis,
       smooth_length: smoothLength,
       cell_size: cellSize,
       beta: beta,
       cs_rate: csRate,
+
       dx: dx,
       dy: dy,
       dz: dz,
+
+      dt: dt,
+      out_step: outStep,
+      max_step: maxStep,
     };
     await runSimulation(config);
 
-    //   // Write JSON file
+    //   // Write JSON State file
     //   await writeTextFile(
     //     exportPath,
     //     JSON.stringify(config, null, 2),
@@ -196,144 +454,48 @@ export default function ThreeView() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      {/* GUI panel */}
-      <div
-        style={{
-          width: "250px",
-          padding: "10px",
-          background: "#222",
-          color: "#fff",
-        }}
-      >
-        <h3>Box Parameters</h3>
-        <label>
-          Size X:
-          <input
-            type="number"
-            value={sizeX}
-            onChange={(e) => setSizeX(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          Size Y:
-          <input
-            type="number"
-            value={sizeY}
-            onChange={(e) => setSizeY(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          Size Z:
-          <input
-            type="number"
-            value={sizeZ}
-            onChange={(e) => setSizeZ(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          Particles per axis:
-          <input
-            type="number"
-            value={particlesPerAxis}
-            onChange={(e) => {
-              const value = Number(e.target.value);
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {renderTabHeader()}
 
-              if (value > 500) {
-                setErrorMessage("Particle count per axis must be 500 or less.");
-                return;
-              }
-
-              setErrorMessage(null);
-              setParticlesPerAxis(value);
+      <div style={{ flex: 1, position: "relative" }}>
+        {/* GUI panel */}
+        {activeTab === "params" && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "250px",
+              height: "100%",
+              padding: "10px",
+              background: "#222",
+              color: "#fff",
+              overflowY: "auto",
+              zIndex: 1,
             }}
-          />
-        </label>
-
-        {errorMessage && (
-          <p style={{ color: "red", marginTop: "8px" }}>{errorMessage}</p>
+          >
+            {renderParams()}
+          </div>
         )}
-        <h3>SPH Parameters</h3>
-        <label>
-          Smooth length:
-          <input
-            type="number"
-            value={smoothLength}
-            onChange={(e) => setSmoothLength(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          Cell size:
-          <input
-            type="number"
-            value={cellSize}
-            onChange={(e) => setCellSize(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          Beta:
-          <input
-            type="number"
-            value={beta}
-            onChange={(e) => setBeta(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          CS_RATE:
-          <input
-            type="number"
-            value={csRate}
-            onChange={(e) => setCsRate(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          DX:
-          <input
-            type="number"
-            value={dx}
-            onChange={(e) => setDx(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          DY:
-          <input
-            type="number"
-            value={dy}
-            onChange={(e) => setDy(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <label>
-          DZ:
-          <input
-            type="number"
-            value={dz}
-            onChange={(e) => setDz(Number(e.target.value))}
-          />
-        </label>
-        <br />
-        <br />
 
-        {/* Pre-display export path */}
-        <button onClick={selectExportPath}>保存先を選択</button>
-        <p style={{ marginTop: "10px", wordBreak: "break-all" }}>
-          Export JSON will be saved to: {exportPath}
-        </p>
-
-        <button onClick={exportParameters}>計算開始</button>
-      </div>
-
-      {/* Three.js canvas */}
-      <div style={{ flex: 1 }}>
+        {/* Three.js canvas */}
         <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+
+        {/* Log panel */}
+        {activeTab === "log" && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 2,
+            }}
+          >
+            {renderLog()}
+          </div>
+        )}
       </div>
     </div>
   );

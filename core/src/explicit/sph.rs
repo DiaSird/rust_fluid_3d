@@ -14,7 +14,7 @@ use super::{
     sph_utils::{Tensor, Velocity},
     stress::update_stress,
     velocity::{update_half_velocity, update_location},
-    write_csv::{display_result, write_result},
+    write_csv::{display_result, write_result, write_sim_checkpoint},
 };
 use anyhow::{Context, Ok, Result};
 
@@ -59,7 +59,6 @@ pub fn sph(
     }
 
     // Neighbor particles
-    // let mut particles: Vec<Particle<DIM>> = (0..MAX_N).map(|_| Particle::new(water)).collect();
     let mut neighbors: Vec<Neighbor<DIM>> = (0..MAX_NEAR_SUM).map(|_| Neighbor::new()).collect();
 
     // Gradient and div particles
@@ -112,24 +111,14 @@ pub fn sph(
         conservative_smoothing(&mut particles[0..n], &neighbors[0..k])
             .context("Failed: conservative smoothing")?;
 
+        // Output
         if step.is_multiple_of(out_step) {
             display_result(step, time, &particles[0..n])?;
-            write_result(step, &particles[0..n])?;
-            let state = rw_checkpoint::State {
-                step,
-                time,
-                dt,
-                n,
-                particles: particles[0..n].to_vec(),
-            };
-            rw_checkpoint::write_checkpoint(
-                "results/checkpoint.bin",
-                // &format!("results/checkpoint_{:08}.bin", step),
-                &state,
-                1024 * 10000,
-            )?;
+            // write_result(step, &particles[0..n])?;
+            write_sim_checkpoint(step, time, dt, n, &particles[0..n])?;
         }
 
+        // Increment
         time += dt;
         step += 1;
     }

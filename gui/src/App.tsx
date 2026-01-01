@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useRef } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 import ThreeView from "./ThreeView";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const threeViewRef = useRef<any>(null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -32,13 +32,17 @@ function App() {
           {/* App title */}
           <h1 style={{ margin: 0 }}>Vite + React + Three.js</h1>
         </div>
+
         {/* Counter button on the right */}
         <div style={{ marginLeft: "auto" }}>
           <button
-            onClick={() => setCount((c) => c + 1)}
+            onClick={async () => {
+              // Run Simulation
+              threeViewRef.current?.exportParameters?.();
+            }}
             style={{ padding: "5px 10px" }}
           >
-            Count: {count}
+            Run
           </button>
         </div>
       </div>

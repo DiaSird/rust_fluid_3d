@@ -1,8 +1,11 @@
 use super::parameters::{DIM, Particle};
+use super::rw_checkpoint;
 use anyhow::{Context, Ok, Result};
 
 pub fn write_result(step: usize, particles: &[Particle<DIM>]) -> Result<()> {
+    // Velocity
     write_velocity_to_csv(step, particles)?;
+    // TODO: Energy and Temperature
     Ok(())
 }
 
@@ -43,5 +46,28 @@ pub fn display_result(step: usize, time: f64, particles: &[Particle<DIM>]) -> Re
     println!("      (ax, ay, az) = {:.3}, {:.3}, {:.3}", ax, ay, az);
     println!("------------------------------------------");
 
+    Ok(())
+}
+
+pub fn write_sim_checkpoint(
+    step: usize,
+    time: f64,
+    dt: f64,
+    n: usize,
+    particles: &[Particle<DIM>],
+) -> Result<()> {
+    let state = rw_checkpoint::State {
+        step,
+        time,
+        dt,
+        n,
+        particles: particles[0..n].to_vec(),
+    };
+    rw_checkpoint::write_checkpoint(
+        "results/checkpoint.bin",
+        // &format!("results/checkpoint_{:08}.bin", step),
+        &state,
+        1024 * 10000,
+    )?;
     Ok(())
 }

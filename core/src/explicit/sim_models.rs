@@ -170,6 +170,7 @@ pub fn make_model(model: &str, particles: &mut [Particle<DIM>]) -> Result<usize>
 
         Ok(n)
     } else {
+        // Default: Box
         make_box_model(particles)
     }
 }
