@@ -25,13 +25,28 @@ pub(crate) struct Config {
 #[tauri::command]
 pub(crate) async fn run_simulation(app: AppHandle, config: Config) -> Result<(), String> {
     let _ = app.emit("simulation-log", "Simulation started.");
-
-    let dt = config.dt;
-    let out_step = config.out_step;
-    let max_step = config.max_step;
-
-    let _ = app.emit("simulation-log", format!("config = {:?}", config));
+    // let _ = app.emit("simulation-log", format!("config = {:?}", config));
 
     let _ = std::fs::create_dir_all("./results");
-    sph(dt, out_step, max_step, Some("results/checkpoint.bin")).map_err(|e| e.to_string())
+    let checkpoint_path = "results/checkpoint.bin";
+    let restart_file = match std::path::Path::new(checkpoint_path).exists() {
+        true => Some(checkpoint_path),
+        false => None,
+    };
+
+    // sph(app, dt, out_step, max_step, Some("results/checkpoint.bin")).map_err(|e| e.to_string())
+    std::thread::spawn(move || {
+        let sph_app = app.clone();
+        if let Err(e) = sph(
+            sph_app,
+            config.dt,
+            config.out_step,
+            config.max_step,
+            restart_file,
+        ) {
+            let _ = app.emit("simulation-log", format!("Error: {:?}", e));
+        }
+    });
+
+    Ok(())
 }

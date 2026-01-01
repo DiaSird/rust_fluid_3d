@@ -30,11 +30,11 @@ function App() {
             <img src={reactLogo} className="logo react" alt="React logo" />
           </a>
           {/* App title */}
-          <h1 style={{ margin: 0 }}>Vite + React + Three.js</h1>
+          <h1 style={{ margin: 0 }}>Terra Solver</h1>
         </div>
 
-        {/* Counter button on the right */}
-        <div style={{ marginLeft: "auto" }}>
+        {/* Run Simulation */}
+        {/* <div style={{ marginLeft: "auto" }}>
           <button
             onClick={async () => {
               // Run Simulation
@@ -44,7 +44,7 @@ function App() {
           >
             Run
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Three.js rendering area */}

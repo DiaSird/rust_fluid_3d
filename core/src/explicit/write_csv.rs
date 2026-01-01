@@ -1,6 +1,7 @@
 use super::parameters::{DIM, Particle};
 use super::rw_checkpoint;
 use anyhow::{Context, Ok, Result};
+use tauri::{AppHandle, Emitter};
 
 pub fn write_result(step: usize, particles: &[Particle<DIM>]) -> Result<()> {
     // Velocity
@@ -31,20 +32,42 @@ pub fn write_velocity_to_csv(step: usize, particles: &[Particle<DIM>]) -> Result
     Ok(())
 }
 
-pub fn display_result(step: usize, time: f64, particles: &[Particle<DIM>]) -> Result<()> {
+pub fn display_result(
+    app: &AppHandle,
+    step: usize,
+    time: f64,
+    particles: &[Particle<DIM>],
+) -> Result<()> {
     // let i: usize = 10;
     let i: usize = 1000;
     let (x, y, z) = particles[i].axis();
     let (vx, vy, vz) = particles[i].velocity();
     let (ax, ay, az) = particles[i].accel();
 
-    println!("------------------------------------------");
-    println!("Step {}, time = {:.3} [ms]", step, time * 1000.0);
-    println!("    Particle: {}", i);
-    println!("      (x, y, z) = {:.3}, {:.3}, {:.3}", x, y, z);
-    println!("      (vx, vy, vz) = {:.3}, {:.3}, {:.3}", vx, vy, vz);
-    println!("      (ax, ay, az) = {:.3}, {:.3}, {:.3}", ax, ay, az);
-    println!("------------------------------------------");
+    let log = format!(
+        "------------------------------------------\n\
+     Step {}, time = {:.3} [ms]\n\
+         Particle: {}\n\
+         (x, y, z) = {:.3}, {:.3}, {:.3}\n\
+         (vx, vy, vz) = {:.3}, {:.3}, {:.3}\n\
+         (ax, ay, az) = {:.3}, {:.3}, {:.3}\n\
+    ------------------------------------------",
+        step,
+        time * 1000.0,
+        i,
+        x,
+        y,
+        z,
+        vx,
+        vy,
+        vz,
+        ax,
+        ay,
+        az
+    );
+
+    app.emit("simulation-log", log)
+        .context("Failed to emit simulation log")?;
 
     Ok(())
 }

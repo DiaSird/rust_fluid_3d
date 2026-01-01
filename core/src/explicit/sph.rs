@@ -17,11 +17,13 @@ use super::{
     write_csv::{display_result, write_result, write_sim_checkpoint},
 };
 use anyhow::{Context, Ok, Result};
+use tauri::{AppHandle, Emitter};
 
 /// SPH Main function
 /// # Errors
 /// MAX Particles < N
 pub fn sph(
+    app: AppHandle,
     mut dt: f64,
     out_step: usize,
     max_step: usize,
@@ -46,12 +48,13 @@ pub fn sph(
         dt = state.dt;
         step = state.step + 1;
 
-        println!(
+        let log = format!(
             "Restarted from checkpoint {} at step {}, time {:.3} [ms]",
             file,
             state.step,
             time * 1000.0
         );
+        let _ = app.emit("simulation-log", log);
     } else {
         // Initialize
         particles = (0..MAX_N).map(|_| Particle::new(water)).collect();
@@ -66,13 +69,15 @@ pub fn sph(
     let mut diff_stress: Vec<Tensor<DIM>> = (0..MAX_N).map(|_| Tensor::new()).collect();
 
     // --- Initialing Simulation
+    let _ = app.emit("simulation-log", "Creating models...");
     // n: total particle numbers, k: total pair particles
     let n: usize = make_model("box", &mut particles).context("Failed: model config")?;
 
+    let _ = app.emit("simulation-log", "Searching neighboring particles...");
     let k = search_near_particles(&mut particles[0..n], &mut neighbors)
         .context("Failed: searching near particles")?;
 
-    display_result(step, time, &particles[0..n])?;
+    display_result(&app, step, time, &particles[0..n])?;
     write_result(step, &particles[0..n])?;
 
     // --- Simulation loop
@@ -113,7 +118,7 @@ pub fn sph(
 
         // Output
         if step.is_multiple_of(out_step) {
-            display_result(step, time, &particles[0..n])?;
+            display_result(&app, step, time, &particles[0..n])?;
             // write_result(step, &particles[0..n])?;
             write_sim_checkpoint(step, time, dt, n, &particles[0..n])?;
         }
