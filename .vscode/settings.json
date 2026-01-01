@@ -9,7 +9,8 @@
     "nalgebra",
     "poiseuille",
     "Tait",
-    "tauri"
+    "tauri",
+    "unlisten"
   ],
   "rust-analyzer.check.command": "clippy"
 }

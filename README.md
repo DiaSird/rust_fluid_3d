@@ -17,13 +17,13 @@
 - Linux
 
 ```shell
-make release
+make ui
 ```
 
 - Windows
 
 ```PowerShell
-cargo run
+cd gui && npm run tauri build --no-bundle
 ```
 
 ## Dependencies

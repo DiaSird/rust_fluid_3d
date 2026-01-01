@@ -64,24 +64,24 @@ export default function ThreeView() {
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [exportPath, setExportPath] = useState(
+  const [exportPath, _setExportPath] = useState(
     `results/params_${Date.now()}.json`
   );
 
-  const selectExportPath = async () => {
-    const defaultPath = `params_${Date.now()}.json`;
-    await openPath(defaultPath, {
-      setPath(path) {
-        setExportPath(path);
-      },
-      filters: [
-        {
-          name: "JSON",
-          extensions: ["json"],
-        },
-      ],
-    });
-  };
+  // const selectExportPath = async () => {
+  //   const defaultPath = `params_${Date.now()}.json`;
+  //   await openPath(defaultPath, {
+  //     setPath(path) {
+  //       setExportPath(path);
+  //     },
+  //     filters: [
+  //       {
+  //         name: "JSON",
+  //         extensions: ["json"],
+  //       },
+  //     ],
+  //   });
+  // };
 
   // Tab Header
   const renderTabHeader = () => (
@@ -123,6 +123,23 @@ export default function ThreeView() {
   // GUI Render
   const renderParams = () => (
     <div style={{ display: "flex", height: "100%" }}>
+      {/* Run Simulation Button */}
+      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}>
+        <button
+          onClick={exportParameters}
+          style={{
+            padding: "8px 16px",
+            background: "#0a0",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Run
+        </button>
+      </div>
+
       {/* GUI panel */}
       <div
         style={{
@@ -283,13 +300,13 @@ export default function ThreeView() {
 
         {/* Pre-display export path */}
         {/* <button onClick={selectExportPath}>保存先を選択</button> */}
-        <button onClick={selectExportPath}>Set JSON path to export</button>
+        {/* <button onClick={selectExportPath}>Set JSON path to export</button>
         <p style={{ marginTop: "10px", wordBreak: "break-all" }}>
           JSON Path: {exportPath}
-        </p>
+        </p> */}
 
-        {/* <button onClick={exportParameters}>計算開始</button> */}
-        <button onClick={exportParameters}>Run</button>
+        {/* <button onClick={exportParameters}>計算開始</button>
+        <button onClick={exportParameters}>Run</button> */}
       </div>
     </div>
   );
