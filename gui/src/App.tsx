@@ -30,7 +30,7 @@ function App() {
             <img src={reactLogo} className="logo react" alt="React logo" />
           </a>
           {/* App title */}
-          <h1 style={{ margin: 0 }}>Terra Solver</h1>
+          <h1 style={{ margin: 0 }}>Terra Solver-Fluid Simulation</h1>
         </div>
 
         {/* Run Simulation */}

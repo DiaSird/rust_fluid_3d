@@ -68,21 +68,6 @@ export default function ThreeView() {
     `results/params_${Date.now()}.json`
   );
 
-  // const selectExportPath = async () => {
-  //   const defaultPath = `params_${Date.now()}.json`;
-  //   await openPath(defaultPath, {
-  //     setPath(path) {
-  //       setExportPath(path);
-  //     },
-  //     filters: [
-  //       {
-  //         name: "JSON",
-  //         extensions: ["json"],
-  //       },
-  //     ],
-  //   });
-  // };
-
   // Tab Header
   const renderTabHeader = () => (
     <div
@@ -124,7 +109,7 @@ export default function ThreeView() {
   const renderParams = () => (
     <div style={{ display: "flex", height: "100%" }}>
       {/* Run Simulation Button */}
-      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}>
+      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 100 }}>
         <button
           onClick={exportParameters}
           style={{
@@ -298,13 +283,6 @@ export default function ThreeView() {
         <br />
         <br />
 
-        {/* Pre-display export path */}
-        {/* <button onClick={selectExportPath}>保存先を選択</button> */}
-        {/* <button onClick={selectExportPath}>Set JSON path to export</button>
-        <p style={{ marginTop: "10px", wordBreak: "break-all" }}>
-          JSON Path: {exportPath}
-        </p> */}
-
         {/* <button onClick={exportParameters}>計算開始</button>
         <button onClick={exportParameters}>Run</button> */}
       </div>
@@ -374,21 +352,53 @@ export default function ThreeView() {
     controls.enableDamping = true;
 
     // Resize handling
-    const handleResize = () => {
-      camera.aspect =
-        mountRef.current!.clientWidth / mountRef.current!.clientHeight;
+    // const handleResize = () => {
+    //   camera.aspect =
+    //     mountRef.current!.clientWidth / mountRef.current!.clientHeight;
+    //   camera.updateProjectionMatrix();
+    //   renderer.setSize(
+    //     mountRef.current!.clientWidth,
+    //     mountRef.current!.clientHeight
+    //   );
+    // };
+    // window.addEventListener("resize", handleResize);
+    // Resize handling with particle & grid scaling
+    const ro = new ResizeObserver(() => {
+      const width = mountRef.current!.clientWidth;
+      const height = mountRef.current!.clientHeight;
+
+      // Update camera
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(
-        mountRef.current!.clientWidth,
-        mountRef.current!.clientHeight
-      );
-    };
-    window.addEventListener("resize", handleResize);
+
+      // Update renderer
+      renderer.setSize(width, height);
+
+      // Update particle scale based on container size
+      const scaleX = width / mountRef.current!.offsetWidth;
+      const scaleY = height / mountRef.current!.offsetHeight;
+      particles.scale.set(scaleX, scaleY, scaleX); // scale-z = scale-x
+      particles.material.needsUpdate = true;
+
+      // Update grid size and position
+      scene.remove(grid);
+      const newGrid = new THREE.GridHelper(sizeX, Math.ceil(sizeX));
+      newGrid.position.y = -sizeY / 2;
+      scene.add(newGrid);
+
+      // Keep reference for cleanup
+      grid = newGrid;
+    });
+    ro.observe(mountRef.current!);
 
     // Grid helper
-    const grid = new THREE.GridHelper(10, 10);
+    let grid = new THREE.GridHelper(10, 10);
     grid.position.y = -sizeY / 2;
     scene.add(grid);
+
+    // const grid = new THREE.GridHelper(10, 10);
+    // grid.position.y = -sizeY / 2;
+    // scene.add(grid);
 
     // Function to generate particle geometry
     const generateParticles = () => {
@@ -426,8 +436,13 @@ export default function ThreeView() {
     };
     animate();
 
+    // return () => {
+    //   window.removeEventListener("resize", handleResize);
+    //   renderer.dispose();
+    //   mountRef.current?.removeChild(renderer.domElement);
+    // };
     return () => {
-      window.removeEventListener("resize", handleResize);
+      ro.disconnect();
       renderer.dispose();
       mountRef.current?.removeChild(renderer.domElement);
     };
