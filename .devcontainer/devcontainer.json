@@ -1,0 +1,53 @@
+{
+  "name": "tauri-dev",
+  // image size: 3.67GB
+  // build time: 862573 ms -> 14.375 mins
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "init": true,
+  "features": {
+    // http://localhost:6080
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "version": "latest",
+      "noVncVersion": "1.2.0",
+      "password": "vscode",
+      "webPort": "6080",
+      "vncPort": "5901"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.91",
+      "profile": "minimal"
+    }
+  },
+  "forwardPorts": [6080, 3000],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "belfz.search-crates-io",
+        "DavidAnson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "EditorConfig.EditorConfig",
+        "emilast.LogFileHighlighter",
+        "fill-labs.dependi",
+        "github.vscode-github-actions",
+        "Gruntfuggly.todo-tree",
+        "mateuszchudyk.hexinspector",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-docker",
+        "oderwat.indent-rainbow",
+        "redhat.vscode-yaml",
+        "rust-lang.rust-analyzer",
+        "streetsidesoftware.code-spell-checker",
+        "tamasfe.even-better-toml",
+        "tauri-apps.tauri-vscode",
+        "vadimcn.vscode-lldb"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}
