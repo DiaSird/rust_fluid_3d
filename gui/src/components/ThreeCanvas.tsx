@@ -5,8 +5,8 @@ import { useParameters } from "./ParameterContext";
 
 export const ThreeCanvas: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const { model_scale, dx: resolution } = useParameters();
 
+  const { model_scale, dx: resolution } = useParameters();
   const { length, width, height } = model_scale;
   const { dx, dy, dz } = resolution;
 
@@ -16,9 +16,11 @@ export const ThreeCanvas: React.FC = () => {
     nz: Math.max(2, Math.floor(height / dz)),
   };
 
+  // rendering effect
   useEffect(() => {
     if (!mountRef.current) return;
 
+    // --- Scene Setup ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111111);
 
@@ -28,7 +30,10 @@ export const ThreeCanvas: React.FC = () => {
       0.1,
       1000
     );
-    camera.position.set(10, 10, 10);
+
+    const maxSize = Math.max(length, width, height);
+    const cameraDistance = maxSize * 1.2;
+    camera.position.set(cameraDistance, cameraDistance, cameraDistance);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -36,15 +41,19 @@ export const ThreeCanvas: React.FC = () => {
       mountRef.current.clientWidth,
       mountRef.current.clientHeight
     );
+    mountRef.current.innerHTML = "";
     mountRef.current.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
-    let grid = new THREE.GridHelper(10, 10);
+    // --- Grid ---
+    let gridDivisions = Math.max(2, Math.floor(length / dx));
+    let grid = new THREE.GridHelper(length, gridDivisions);
     grid.position.y = -width / 2;
     scene.add(grid);
 
+    // --- Particles ---
     const generateParticles = () => {
       const geometry = new THREE.BufferGeometry();
       const total = nx * ny * nz;
@@ -67,10 +76,14 @@ export const ThreeCanvas: React.FC = () => {
       return geometry;
     };
 
-    const material = new THREE.PointsMaterial({ color: 0x44aaff, size: 0.05 });
+    const material = new THREE.PointsMaterial({
+      color: 0x44aaff,
+      size: Math.min(dx, dy, dz) * 0.2,
+    });
     let particles = new THREE.Points(generateParticles(), material);
     scene.add(particles);
 
+    // --- Animation ---
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
@@ -79,34 +92,36 @@ export const ThreeCanvas: React.FC = () => {
     };
     animate();
 
+    // --- Resize Observer ---
     const ro = new ResizeObserver(() => {
-      const width = mountRef.current!.clientWidth;
-      const height = mountRef.current!.clientHeight;
-
-      camera.aspect = width / height;
+      if (!mountRef.current) return;
+      const w = mountRef.current.clientWidth;
+      const h = mountRef.current.clientHeight;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
+      renderer.setSize(w, h);
 
       particles.scale.set(
-        width / mountRef.current!.offsetWidth,
-        height / mountRef.current!.offsetHeight,
-        width / mountRef.current!.offsetWidth
+        w / mountRef.current.offsetWidth,
+        h / mountRef.current.offsetHeight,
+        w / mountRef.current.offsetWidth
       );
       particles.material.needsUpdate = true;
 
       scene.remove(grid);
-      grid = new THREE.GridHelper(length, Math.ceil(length));
+      gridDivisions = Math.max(2, Math.floor(length / dx));
+      grid = new THREE.GridHelper(length, gridDivisions);
       grid.position.y = -width / 2;
       scene.add(grid);
     });
-    ro.observe(mountRef.current!);
+    ro.observe(mountRef.current);
 
     return () => {
       ro.disconnect();
       renderer.dispose();
       mountRef.current?.removeChild(renderer.domElement);
     };
-  }, [length, width, height, dx, dy, dz]);
+  }, [length, width, height, dx, dy, dz, nx, ny, nz]);
 
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 };

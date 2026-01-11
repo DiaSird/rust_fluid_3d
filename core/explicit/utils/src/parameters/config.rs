@@ -86,12 +86,12 @@ impl Default for Config {
 
             // time control
             dt: 0.001,
-            out_step: 1,
+            out_step: 10,
             max_step: 10_000,
 
             // misc
             restart_file: None,
-            out_file: std::path::PathBuf::from("./sim_ckpt.bin"),
+            out_file: std::path::PathBuf::from("./sim_checkpoint.bin"),
             monitor_particle: 0,
             log_report: None,
         }

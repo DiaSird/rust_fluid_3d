@@ -105,23 +105,23 @@ export const useParameters = (): ParameterContextProps => {
 
 export const ParameterProvider = ({ children }: { children: ReactNode }) => {
   // Max particles
-  const [max_n, setMaxN] = useState(15 ** 3);
-  const [max_near_n, setMaxNearN] = useState(50);
+  const [max_n, setMaxN] = useState(60000);
+  const [max_near_n, setMaxNearN] = useState(100);
 
   // Model scale
   const [model_scale, setModelScale] = useState<ModelScale>({
-    length: 5,
-    width: 5,
-    height: 5,
+    length: 0.5,
+    width: 0.5,
+    height: 0.5,
   });
 
   // Boundary condition
-  const [bc_pattern, setBCPattern] = useState<BC>("LidDrivenCavity");
-  const [u_lid, setULid] = useState(1);
+  const [bc_pattern, setBCPattern] = useState<BC>("Cavity-Flow");
+  const [u_lid, setULid] = useState(5.0);
 
   // SPH parameters
   const [smooth_length, setSmoothLength] = useState(0.0324);
-  const [cell_scale, setCellScale] = useState(0.0648);
+  const [cell_scale, setCellScale] = useState(2.0);
   const [beta, setBeta] = useState(0.3);
   const [cs_rate, setCsRate] = useState(0.05);
 
@@ -129,13 +129,13 @@ export const ParameterProvider = ({ children }: { children: ReactNode }) => {
   const [dx, setDx] = useState<Resolution>({ dx: 0.027, dy: 0.027, dz: 0.027 });
 
   // Time stepping
-  const [dt, setDt] = useState(0.00001);
+  const [dt, setDt] = useState(0.001);
   const [out_step, setOutStep] = useState(10);
-  const [max_step, setMaxStep] = useState(100);
+  const [max_step, setMaxStep] = useState(1000);
 
   // Checkpoint / monitoring
   const [restart_file, setRestartFile] = useState<string | undefined>(
-    undefined
+    "sim_checkpoint.bin"
   );
   const [monitor_particle, setMonitorParticle] = useState(0);
 
