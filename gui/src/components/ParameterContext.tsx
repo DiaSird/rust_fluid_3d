@@ -21,11 +21,7 @@ export interface Config {
   model_scale: ModelScale;
 
   // Boundary condition
-  bc_pattern:
-    | "Cavity-Flow"
-    | "Poiseuille-Flow"
-    | "Periodic-Flow"
-    | "LidDrivenCavity";
+  bc_pattern: "Cavity-Flow" | "Poiseuille-Flow" | "Periodic-Flow" | "LidDrivenCavity";
   u_lid: number;
 
   // SPH parameters
@@ -47,11 +43,7 @@ export interface Config {
   monitor_particle: number;
 }
 
-type BC =
-  | "Cavity-Flow"
-  | "Poiseuille-Flow"
-  | "Periodic-Flow"
-  | "LidDrivenCavity";
+type BC = "Cavity-Flow" | "Poiseuille-Flow" | "Periodic-Flow" | "LidDrivenCavity";
 
 interface ParameterContextProps {
   max_n: number;
@@ -90,16 +82,16 @@ interface ParameterContextProps {
   setRestartFile: (v: string) => void;
   monitor_particle: number;
   setMonitorParticle: (v: number) => void;
+
+  log: string;
+  setLog: (v: string) => void;
 }
 
-export const ParameterContext = createContext<
-  ParameterContextProps | undefined
->(undefined);
+export const ParameterContext = createContext<ParameterContextProps | undefined>(undefined);
 
 export const useParameters = (): ParameterContextProps => {
   const context = useContext(ParameterContext);
-  if (!context)
-    throw new Error("useParameters must be used within a ParameterProvider");
+  if (!context) throw new Error("useParameters must be used within a ParameterProvider");
   return context;
 };
 
@@ -134,10 +126,10 @@ export const ParameterProvider = ({ children }: { children: ReactNode }) => {
   const [max_step, setMaxStep] = useState(1000);
 
   // Checkpoint / monitoring
-  const [restart_file, setRestartFile] = useState<string | undefined>(
-    "sim_checkpoint.bin"
-  );
+  const [restart_file, setRestartFile] = useState<string | undefined>("sim_checkpoint.bin");
   const [monitor_particle, setMonitorParticle] = useState(0);
+
+  const [log, setLog] = useState("");
 
   return (
     <ParameterContext.Provider
@@ -177,6 +169,9 @@ export const ParameterProvider = ({ children }: { children: ReactNode }) => {
         setRestartFile,
         monitor_particle,
         setMonitorParticle,
+
+        log,
+        setLog,
       }}
     >
       {children}

@@ -1,5 +1,5 @@
 use sph::sph;
-use tauri::{AppHandle, Emitter};
+use tauri::{Emitter, Window};
 use utils::parameters::{BC, Config, ModelScale, Resolution};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -17,7 +17,7 @@ pub(crate) struct GuiConfig {
 
     // SPH parameters
     pub smooth_length: f64,
-    pub cell_size: f64,
+    pub cell_scale: f64,
     pub beta: f64,
     pub cs_rate: f64,
 
@@ -45,7 +45,7 @@ impl From<GuiConfig> for Config {
             bc_pattern: gui_config.bc_pattern,
             u_lid: gui_config.u_lid,
             smooth_length: gui_config.smooth_length,
-            cell_scale: gui_config.cell_size,
+            cell_scale: gui_config.cell_scale,
             beta: gui_config.beta,
             cs_rate: gui_config.cs_rate,
             dx: gui_config.dx,
@@ -59,17 +59,24 @@ impl From<GuiConfig> for Config {
     }
 }
 
+/// Create closure that reports.
+pub(super) fn sender<S>(window: Window, event: &'static str) -> impl Fn(S) + Clone
+where
+    S: serde::Serialize + Clone,
+{
+    move |payload: S| {
+        if let Err(err) = window.emit(event, payload) {
+            println!("{err}");
+            // tracing::error!("{}", err);
+        };
+    }
+}
+
 #[tauri::command]
-pub(crate) async fn run_simulation(app: AppHandle, config: GuiConfig) -> Result<(), String> {
-    let _ = app.emit("simulation-log", "Simulation started.");
-    // let _ = app.emit("simulation-log", format!("config = {:?}", config));
-    let config = config.into();
+pub(crate) async fn run_simulation(windows: Window, config: GuiConfig) -> Result<(), String> {
+    let _ = windows.emit("terra://simulation-log", "Simulation started.");
+    let mut config: Config = config.into();
+    config.log_report = Some(Box::new(sender(windows, "terra://simulation-log")));
 
-    std::thread::spawn(move || {
-        if let Err(e) = sph::sph(config) {
-            let _ = app.emit("simulation-log", format!("Error: {:?}", e));
-        }
-    });
-
-    Ok(())
+    sph::sph(config).map_err(|e| e.to_string())
 }
