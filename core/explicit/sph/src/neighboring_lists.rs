@@ -1,9 +1,9 @@
-use anyhow::{Context as _, Result, bail};
 use nalgebra as na;
 use nalgebra::SimdComplexField;
 use std::collections::HashMap;
-use utils::parameters::{
-    CELL_SIZE, DIM, MAX_NEAR_SUM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH,
+use utils::{
+    error::{FailedWriteFileSnafu, SimError},
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
 };
 
 // Kernel function
@@ -27,32 +27,32 @@ fn b_spline_kernel(q: f64) -> (f64, f64) {
 
 type Grid = HashMap<(usize, usize, usize), Vec<usize>>;
 
-fn cll_property(particles: &[Particle<DIM>]) -> (f64, f64, f64, Grid) {
+fn min_location(particles: &[Particle<DIM>], index: usize) -> f64 {
+    particles
+        .iter()
+        .map(|p| p.x[index])
+        .fold(f64::INFINITY, f64::min)
+}
+
+fn cell_location(x: f64, min: f64, cell_size: f64) -> usize {
+    ((x - min) / cell_size).floor() as usize
+}
+
+fn cll_property(particles: &[Particle<DIM>], cell_size: f64) -> (f64, f64, f64, Grid) {
     // HashMap for cell layout
     let mut grid: Grid = HashMap::new();
-
-    fn min_location(particles: &[Particle<DIM>], index: usize) -> f64 {
-        particles
-            .iter()
-            .map(|p| p.x[index])
-            .fold(f64::INFINITY, f64::min)
-    }
 
     // Calculate the minimum coordinates
     let min_x = min_location(particles, 0);
     let min_y = min_location(particles, 1);
     let min_z = min_location(particles, 2);
 
-    fn cell_location(x: f64, min: f64) -> usize {
-        ((x - min) / CELL_SIZE).floor() as usize
-    }
-
     // Place particles into cells
     for (i, particle) in particles.iter().enumerate() {
         // Subtract the minimum coordinates and divide by cell size to calculate cell index
-        let cell_x = cell_location(particle.x[0], min_x);
-        let cell_y = cell_location(particle.x[1], min_y);
-        let cell_z = cell_location(particle.x[2], min_z);
+        let cell_x = cell_location(particle.x[0], min_x, cell_size);
+        let cell_y = cell_location(particle.x[1], min_y, cell_size);
+        let cell_z = cell_location(particle.x[2], min_z, cell_size);
 
         grid.entry((cell_x, cell_y, cell_z)).or_default().push(i);
     }
@@ -64,16 +64,19 @@ fn cll_property(particles: &[Particle<DIM>]) -> (f64, f64, f64, Grid) {
 pub(crate) fn search_near_particles(
     particles: &mut [Particle<DIM>],
     neigh_lists: &mut [Neighbor<DIM>],
-) -> Result<usize> {
-    let smooth_length_squared = (2.0 * SMOOTH_LENGTH).simd_powf(2.0);
-    let (min_x, min_y, min_z, grid) = cll_property(particles);
+    smooth_length: f64,
+    cell_scale: f64,
+) -> Result<usize, SimError> {
+    let smooth_length_squared = (2.0 * smooth_length).simd_powf(2.0);
+    let cell_size = cell_scale * smooth_length;
+    let (min_x, min_y, min_z, grid) = cll_property(particles, cell_size);
 
     // i -> j loop
     let mut total_pair: usize = 0;
     for (i, particle) in particles.iter().enumerate() {
-        let cell_x = ((particle.x[0] - min_x) / CELL_SIZE).floor() as isize;
-        let cell_y = ((particle.x[1] - min_y) / CELL_SIZE).floor() as isize;
-        let cell_z = ((particle.x[2] - min_z) / CELL_SIZE).floor() as isize;
+        let cell_x = ((particle.x[0] - min_x) / cell_size).floor() as isize;
+        let cell_y = ((particle.x[1] - min_y) / cell_size).floor() as isize;
+        let cell_z = ((particle.x[2] - min_z) / cell_size).floor() as isize;
 
         // Check the 8 surrounding cells (self cell + neighboring cells)
         for dx in -1..=1 {
@@ -90,8 +93,11 @@ pub(crate) fn search_near_particles(
                             if i != j {
                                 let d = particles[i].x.metric_distance(&particles[j].x);
 
-                                if total_pair >= MAX_NEAR_SUM {
-                                    bail!("Exceeded the maximum number of pair particles.");
+                                if total_pair >= neighbors.len() {
+                                    return Err(SimError::ExceededMaxNumber {
+                                        n: total_pair,
+                                        max_n: neighbors.len(),
+                                    });
                                 }
 
                                 // If the distance is valid, add as a neighboring pair
@@ -102,10 +108,10 @@ pub(crate) fn search_near_particles(
                                     neigh_lists[total_pair].i = i;
                                     neigh_lists[total_pair].j = j;
 
-                                    let q = d / SMOOTH_LENGTH;
+                                    let q = d / smooth_length;
 
                                     let (w, dwdq) = b_spline_kernel(q);
-                                    let mut dwdr = na::Vector::from([dwdq / SMOOTH_LENGTH; DIM]);
+                                    let mut dwdr = na::Vector::from([dwdq / smooth_length; DIM]);
 
                                     // multiply dwdr by base vector: ei = x/r
                                     dwdr[0] *= particles[i].x[0] / d;
@@ -124,7 +130,7 @@ pub(crate) fn search_near_particles(
     }
 
     if total_pair == 0 {
-        bail!("Total pair particle is zero.");
+        return Err(SimError::ZeroParticleNumber);
     }
 
     make_neighboring_list(particles, &neigh_lists[0..total_pair]);
@@ -141,9 +147,12 @@ pub fn make_neighboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neigh
 }
 
 // Write only the particles created
-#[allow()]
-fn write_kernel_to_csv(particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>]) -> Result<()> {
-    let filename = "./results/kernel.csv";
+#[allow(unused)]
+fn write_kernel_to_csv(
+    particles: &[Particle<DIM>],
+    neighbors: &[Neighbor<DIM>],
+) -> Result<(), SimError> {
+    let filename = std::path::PathBuf::from("./results/kernel.csv");
     let mut csv = String::new();
 
     // CSV header
@@ -160,7 +169,8 @@ fn write_kernel_to_csv(particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>])
             pair,
         ));
     }
+    use snafu::ResultExt as _;
 
-    std::fs::write(filename, &csv).context("Failed to create CSV file")?;
+    std::fs::write(&filename, &csv).with_context(|_| FailedWriteFileSnafu { path: filename });
     Ok(())
 }

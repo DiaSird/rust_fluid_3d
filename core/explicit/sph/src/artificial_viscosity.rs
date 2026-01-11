@@ -1,12 +1,13 @@
-use anyhow::Result;
 use nalgebra as na;
 use rayon::prelude::*;
-use utils::parameters::{BETA, DIM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH};
+use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
 
 pub(crate) fn update_artificial_viscosity(
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
-) -> Result<()> {
+    smooth_length: f64,
+    beta: f64,
+) {
     let n = particles.len();
 
     // Parallel computation using per-thread buffers (fold + reduce)
@@ -28,9 +29,9 @@ pub(crate) fn update_artificial_viscosity(
                 let v_dot_x = vij.dot(&xij);
                 if v_dot_x < 0.0 {
                     let coef =
-                        v_dot_x / (0.1 * SMOOTH_LENGTH).mul_add(0.1 * SMOOTH_LENGTH, xij.dot(&xij));
+                        v_dot_x / (0.1 * smooth_length).mul_add(0.1 * smooth_length, xij.dot(&xij));
                     let identity = na::Matrix3::identity();
-                    let coef_val = (-BETA * cij).mul_add(coef, BETA * coef.powi(2)) / rho_ij;
+                    let coef_val = (-beta * cij).mul_add(coef, beta * coef.powi(2)) / rho_ij;
 
                     // add stress contributions to local buffer
                     local_buf[neigh.i] += coef_val * identity;
@@ -54,6 +55,4 @@ pub(crate) fn update_artificial_viscosity(
     for (i, s) in stress_buf.iter().enumerate() {
         particles[i].stress += *s;
     }
-
-    Ok(())
 }

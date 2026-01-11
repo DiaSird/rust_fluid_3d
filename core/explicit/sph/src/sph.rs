@@ -8,24 +8,24 @@ use super::{
     stress::update_stress,
     velocity::{update_half_velocity, update_location},
 };
-use anyhow::{Context, Ok, Result};
 use utils::{
     bs_settings::boundary_condition,
     cfl_condition::cfl_dt,
-    parameters::{Config, DIM, Fluid, Message, NeighboringList as Neighbor, Particle},
+    error::SimError,
+    parameters::{Config, DIM, Fluid, NeighboringList as Neighbor, Particle},
     rw_checkpoint,
     sim_models::make_model,
-    write_csv::{display_result, write_result, write_sim_checkpoint},
+    write_csv::display_result,
 };
 
 /// SPH Main function
 /// # Errors
-/// MAX Particles < N
-pub fn sph(config: Config) -> Result<()> {
+/// MAX Particles < N, Nan value occurs
+pub fn sph(config: Config) -> Result<(), SimError> {
     #[rustfmt::skip]
     let Config {
         max_n, max_near_n, model_scale, bc_pattern, u_lid,
-        n_axis, smooth_length, cell_size, beta, cs_rate,
+        smooth_length, cell_scale, beta, cs_rate,
         dx, mut dt, out_step, max_step, restart_file, out_file,
         monitor_particle, log_report,
     } = config;
@@ -49,14 +49,16 @@ pub fn sph(config: Config) -> Result<()> {
         dt = state.dt;
         step = state.step + 1;
 
-        let _log = format!(
+        let log = format!(
             "Restarted from checkpoint {} at step {}, time {:.3} [ms]",
             file.display(),
             state.step,
             time * 1000.0
         );
-        dbg!(&_log);
-        // let _ = app.emit("simulation-log", log);
+
+        if let Some(log_report) = &log_report {
+            log_report(utils::parameters::ParticleLog::LogInfo(log));
+        }
     } else {
         // Initialize
         particles = (0..max_n).map(|_| Particle::new(water)).collect();
@@ -75,53 +77,50 @@ pub fn sph(config: Config) -> Result<()> {
     // --- Initialing Simulation
     if let Some(log_report) = &log_report {
         log_report(utils::parameters::ParticleLog::LogInfo(
-            Message::CreateModel,
+            "Creating models...".into(),
         ));
     }
 
     // n: total particle numbers, k: total pair particles
-    let n: usize = make_model("box", &mut particles)?;
+    let n: usize = make_model("box", &mut particles, &model_scale, &dx)?;
 
     if let Some(log_report) = &log_report {
-        log_report(utils::parameters::ParticleLog::LogInfo(Message::Search));
+        log_report(utils::parameters::ParticleLog::LogInfo(
+            "Searching neighboring particles...".into(),
+        ));
     }
-    let k = search_near_particles(&mut particles[0..n], &mut neighbors)
-        .context("Failed: searching near particles")?;
+
+    #[rustfmt::skip]
+    let k = search_near_particles(&mut particles[0..n], &mut neighbors, smooth_length, cell_scale)?;
 
     if let Some(log_report) = &log_report {
         #[rustfmt::skip]
         display_result(monitor_particle, log_report, step, time, &particles[0..n]);
     }
-    // write_result(step, &particles[0..n])?;
 
     // --- Simulation loop
     while step <= max_step {
         dt = cfl_dt(dt, &particles[0..n]);
         boundary_condition(&mut particles[0..n], bc_pattern, u_lid);
 
-        #[rustfmt::skip]
-        update_half_velocity(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
+        update_half_velocity(dt, &mut particles[0..n])?;
+        update_location(dt, &mut particles[0..n])?;
 
         #[rustfmt::skip]
-        update_location(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
+        update_density(dt, &mut particles[0..n], &neighbors[0..k], &mut diff_velocity[0..n])?;
 
         #[rustfmt::skip]
-        update_density(dt, &mut particles[0..n], &neighbors[0..k], &mut diff_velocity[0..n]).context("Failed: updating density")?;
+        update_artificial_viscosity(&mut particles[0..n], &neighbors[0..k], smooth_length, beta);
 
         #[rustfmt::skip]
-        update_artificial_viscosity(&mut particles[0..n], &neighbors[0..k]).context("Failed: updating artificial viscosity")?;
+        update_stress(&mut particles[0..n], &mut neighbors[0..k], &mut diff_velocity[0..n],)?;
 
         #[rustfmt::skip]
-        update_stress(&mut particles[0..n], &mut neighbors[0..k], &mut diff_velocity[0..n],).context("Failed: updating stress")?;
+        update_acceleration(&mut particles[0..n], &neighbors[0..k], &mut diff_stress[0..n])?;
 
-        #[rustfmt::skip]
-        update_acceleration(&mut particles[0..n], &neighbors[0..k], &mut diff_stress[0..n]).context("Failed: updating acceleration")?;
+        update_half_velocity(dt, &mut particles[0..n])?;
 
-        #[rustfmt::skip]
-        update_half_velocity(dt, &mut particles[0..n]).context("Failed: updating velocity")?;
-
-        #[rustfmt::skip]
-        conservative_smoothing(&mut particles[0..n], &neighbors[0..k]).context("Failed: conservative smoothing")?;
+        conservative_smoothing(&mut particles[0..n], &neighbors[0..k], cs_rate);
 
         // Output
         if step.is_multiple_of(out_step) {
@@ -129,7 +128,7 @@ pub fn sph(config: Config) -> Result<()> {
                 #[rustfmt::skip]
                 display_result(monitor_particle, log_report, step, time, &particles[0..n]);
             }
-            write_sim_checkpoint(&out_file, step, time, dt, n, &particles[0..n])?;
+            rw_checkpoint::write_sim_checkpoint(&out_file, step, time, dt, n, &particles[0..n])?;
         }
 
         // Increment
@@ -141,9 +140,8 @@ pub fn sph(config: Config) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use utils::parameters::ParticleLog;
-
     use super::*;
+    use utils::parameters::ParticleLog;
 
     /// Test SPH on background
     #[test]

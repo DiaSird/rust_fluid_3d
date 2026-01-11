@@ -1,7 +1,6 @@
-use anyhow::{Ok, Result};
 use nalgebra as na;
 use rayon::prelude::*;
-use utils::parameters::{CS_RATE, DIM, MAX_N, NeighboringList as Neighbor, Particle};
+use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
 
 struct CsValue {
     /// SPH Velocity [m/s]
@@ -22,10 +21,11 @@ impl CsValue {
 pub(crate) fn conservative_smoothing(
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
-) -> Result<()> {
+    cs_rate: f64,
+) {
     // initialize coefficients
-    let mut coef = vec![0.0; MAX_N];
-    let mut cs_value: Vec<CsValue> = (0..MAX_N).map(|_| CsValue::new()).collect();
+    let mut coef = vec![0.0; particles.len()];
+    let mut cs_value: Vec<CsValue> = (0..particles.len()).map(|_| CsValue::new()).collect();
 
     for Neighbor { i, j, w, .. } in neighbors.iter() {
         let coef_i = w * particles[*i].volume;
@@ -52,10 +52,8 @@ pub(crate) fn conservative_smoothing(
         .par_iter_mut()
         .enumerate()
         .for_each(|(i, particle)| {
-            particle.v = (1.0 - CS_RATE) * particle.v + CS_RATE * cs_value[i].velocity / coef[i];
+            particle.v = (1.0 - cs_rate) * particle.v + cs_rate * cs_value[i].velocity / coef[i];
             particle.stress =
-                (1.0 - CS_RATE) * particle.stress + CS_RATE * cs_value[i].stress / coef[i];
+                (1.0 - cs_rate) * particle.stress + cs_rate * cs_value[i].stress / coef[i];
         });
-
-    Ok(())
 }

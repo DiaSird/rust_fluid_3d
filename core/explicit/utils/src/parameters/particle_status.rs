@@ -1,21 +1,5 @@
-use std::fmt::Debug;
-
 use crate::parameters::Vector;
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub enum Message {
-    CreateModel,
-    Search,
-}
-
-impl Message {
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::CreateModel => "Creating models...",
-            Self::Search => "Searching neighboring particles...",
-        }
-    }
-}
+use std::fmt::Debug;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ParticleLog {
@@ -24,7 +8,7 @@ pub enum ParticleLog {
         time: f64,
         message: String,
     },
-    LogInfo(Message),
+    LogInfo(String),
     Info3 {
         monitor_particle: usize,
         step: usize,

@@ -1,14 +1,16 @@
 use super::sph_utils::{SphDiff, Tensor};
-use anyhow::{Context, Result, bail};
 use nalgebra as na;
 use rayon::prelude::*;
-use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
+use utils::{
+    error::{SimError, check_nan_to_error},
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
+};
 
 pub(crate) fn update_acceleration(
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
     diff_stress: &mut [Tensor<DIM>],
-) -> Result<()> {
+) -> Result<(), SimError> {
     let n = particles.len();
 
     // Thread-local buffer for dv/dt
@@ -18,14 +20,9 @@ pub(crate) fn update_acceleration(
     diff_stress
         .par_iter_mut()
         .enumerate()
-        .try_for_each(|(i, stress)| -> Result<()> {
+        .try_for_each(|(i, stress)| -> Result<(), SimError> {
             // Calculate div(stress)
-            stress.sph_div(particles, neighbors, i).with_context(|| {
-                format!(
-                    "Failed: div-stress in updating acceleration for particle {}",
-                    i
-                )
-            })?;
+            stress.sph_div(particles, neighbors, i)?;
 
             let dvdt = na::Vector3::from(stress.div_tensor) / particles[i].rho;
 
@@ -42,9 +39,7 @@ pub(crate) fn update_acceleration(
     // merge buffer into particles
     #[allow(clippy::unwrap_used, clippy::unwrap_in_result)]
     for (i, dv) in dvdt_buf.read().unwrap().iter().enumerate() {
-        if dv.dot(dv).is_nan() {
-            bail!("dv/dt has NaN on particle {}", i);
-        }
+        check_nan_to_error(i, dv.dot(dv))?;
         particles[i].dvdt = *dv;
     }
 

@@ -1,8 +1,10 @@
 use super::sph_utils::Velocity;
-use anyhow::{Ok, Result};
 use nalgebra::{self as na, SimdComplexField};
 use rayon::prelude::*;
-use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
+use utils::{
+    error::{SimError, check_nan_matrix3_to_error},
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
+};
 
 // For water
 fn tait_eq(particle: &Particle<DIM>) -> f64 {
@@ -28,7 +30,7 @@ fn viscosity_stress(
     particles: &mut [Particle<DIM>],
     neighbors: &mut [Neighbor<DIM>],
     diff_velocity: &mut [Velocity<DIM>],
-) {
+) -> Result<(), SimError> {
     // Total particles and identity matrix
     let n = particles.len();
     let identity: na::Matrix3<f64> = na::Matrix3::identity();
@@ -51,6 +53,9 @@ fn viscosity_stress(
         // Viscosity stress: grad(v) + grad(v)^T
         particles[neigh.i].stress = grad_vi + grad_vi.transpose();
         particles[neigh.j].stress = grad_vj + grad_vj.transpose();
+
+        check_nan_matrix3_to_error(neigh.i, particles[neigh.i].stress)?;
+        check_nan_matrix3_to_error(neigh.j, particles[neigh.j].stress)?;
     }
 
     // Viscosity stress
@@ -59,15 +64,17 @@ fn viscosity_stress(
         particles[i].stress += -&identity * v.div_v * 2.0 / 3.0;
         particles[i].stress *= particles[i].viscosity;
     }
+
+    Ok(())
 }
 
 pub(crate) fn update_stress(
     particles: &mut [Particle<DIM>],
     neighbors: &mut [Neighbor<DIM>],
     diff_velocity: &mut [Velocity<DIM>],
-) -> Result<()> {
+) -> Result<(), SimError> {
     // Compute viscosity stress
-    viscosity_stress(particles, neighbors, diff_velocity);
+    viscosity_stress(particles, neighbors, diff_velocity)?;
 
     // Add static stress
     static_stress(particles);

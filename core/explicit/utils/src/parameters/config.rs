@@ -30,9 +30,8 @@ pub struct Config {
     pub u_lid: f64,
 
     // SPH parameters
-    pub n_axis: usize,
     pub smooth_length: f64,
-    pub cell_size: f64,
+    pub cell_scale: f64,
     pub beta: f64,
     pub cs_rate: f64,
 
@@ -71,11 +70,10 @@ impl Default for Config {
             // boundary condition
             bc_pattern: BC::CavityFlow,
             u_lid: 5.0,
-            n_axis: 10,
 
             // SPH parameters
             smooth_length: 0.0324,
-            cell_size: 0.0324 * 2.0,
+            cell_scale: 2.0,
             beta: 0.3,
             cs_rate: 0.05,
 

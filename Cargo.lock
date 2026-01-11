@@ -3785,14 +3785,13 @@ dependencies = [
 name = "sph"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "csv",
  "nalgebra",
  "postcard",
  "rayon",
  "serde",
  "serde_derive",
- "tauri",
+ "snafu",
  "utils",
 ]
 
@@ -4766,7 +4765,6 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 name = "utils"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "csv",
  "nalgebra",
  "postcard",
@@ -4774,7 +4772,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "snafu",
- "tauri",
 ]
 
 [[package]]

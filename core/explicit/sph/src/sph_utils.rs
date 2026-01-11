@@ -1,32 +1,38 @@
-use anyhow::{Result, bail};
 use nalgebra::{self as na, SimdComplexField};
-use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
+use utils::{
+    error::{SimError, check_nan_to_error},
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
+};
 
 // -- Traits --
 // Standard sph
 pub(crate) trait _SphStd {
+    type Error;
+
     fn sph_std(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
         i: usize,
-    ) -> Result<()>;
+    ) -> Result<(), Self::Error>;
 }
 
 // Differential sph
 pub(crate) trait SphDiff {
+    type Error;
+
     fn _sph_grad(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
         i: usize,
-    ) -> Result<()>;
+    ) -> Result<(), Self::Error>;
     fn sph_div(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
         i: usize,
-    ) -> Result<()>;
+    ) -> Result<(), Self::Error>;
 }
 
 // -- Structs --
@@ -47,12 +53,14 @@ impl<const D: usize> Velocity<D> {
 }
 
 impl<const D: usize> SphDiff for Velocity<D> {
+    type Error = SimError;
+
     fn _sph_grad(
         &mut self,
         _particles: &[Particle<DIM>],
         _neighbors: &[Neighbor<DIM>],
         _i: usize,
-    ) -> Result<()> {
+    ) -> Result<(), Self::Error> {
         Ok(())
     }
 
@@ -62,14 +70,7 @@ impl<const D: usize> SphDiff for Velocity<D> {
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
         i: usize,
-    ) -> Result<()> {
-        if i >= particles.len() {
-            bail!(
-                "Exceeded the maximum number of particles. {}",
-                particles.len()
-            );
-        }
-
+    ) -> Result<(), SimError> {
         let start: usize = match i {
             0 => 0,
             _ => particles[i - 1].pair + 1,
@@ -88,6 +89,8 @@ impl<const D: usize> SphDiff for Velocity<D> {
 
             self.div_v += (vi - vj).dot(&dwdr) * volume_j;
             self.div_v += (vj - vi).dot(&-dwdr) * volume_i;
+
+            check_nan_to_error(0, self.div_v)?;
         }
 
         Ok(())
@@ -109,12 +112,14 @@ impl Tensor<DIM> {
 }
 
 impl SphDiff for Tensor<DIM> {
+    type Error = SimError;
+
     fn _sph_grad(
         &mut self,
         _particles: &[Particle<DIM>],
         _neighbors: &[Neighbor<DIM>],
         _i: usize,
-    ) -> Result<()> {
+    ) -> Result<(), Self::Error> {
         // No-need to impl
         Ok(())
     }
@@ -124,14 +129,7 @@ impl SphDiff for Tensor<DIM> {
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
         i: usize,
-    ) -> Result<()> {
-        if i >= particles.len() {
-            bail!(
-                "Exceeded the maximum number of particles. {}",
-                particles.len()
-            );
-        }
-
+    ) -> Result<(), Self::Error> {
         let start: usize = match i {
             0 => 0,
             _ => particles[i - 1].pair + 1,
@@ -157,6 +155,7 @@ impl SphDiff for Tensor<DIM> {
             for d in 0..DIM {
                 self.div_tensor[d] += dot_i[d] * volume_j;
                 self.div_tensor[d] += dot_j[d] * volume_i;
+                check_nan_to_error(d, self.div_tensor[d])?;
             }
         }
 

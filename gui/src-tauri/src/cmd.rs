@@ -3,11 +3,10 @@ use tauri::{AppHandle, Emitter};
 use utils::parameters::{BC, Config, ModelScale, Resolution};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub(crate) struct GUIConfig {
+pub(crate) struct GuiConfig {
     /// Max particles
     pub max_n: usize,
     pub max_near_n: usize,
-    pub max_near_sum: usize,
 
     // Model size
     pub model_scale: ModelScale,
@@ -17,7 +16,6 @@ pub(crate) struct GUIConfig {
     pub u_lid: f64,
 
     // SPH parameters
-    pub n_axis: usize,
     pub smooth_length: f64,
     pub cell_size: f64,
     pub beta: f64,
@@ -38,37 +36,34 @@ pub(crate) struct GUIConfig {
     pub monitor_particle: usize,
 }
 
+impl From<GuiConfig> for Config {
+    fn from(gui_config: GuiConfig) -> Self {
+        Self {
+            max_n: gui_config.max_n,
+            max_near_n: gui_config.max_near_n,
+            model_scale: gui_config.model_scale,
+            bc_pattern: gui_config.bc_pattern,
+            u_lid: gui_config.u_lid,
+            smooth_length: gui_config.smooth_length,
+            cell_scale: gui_config.cell_size,
+            beta: gui_config.beta,
+            cs_rate: gui_config.cs_rate,
+            dx: gui_config.dx,
+            dt: gui_config.dt,
+            out_step: gui_config.out_step,
+            max_step: gui_config.max_step,
+            restart_file: gui_config.restart_file,
+            monitor_particle: gui_config.monitor_particle,
+            ..Default::default()
+        }
+    }
+}
+
 #[tauri::command]
-pub(crate) async fn run_simulation(app: AppHandle, config: GUIConfig) -> Result<(), String> {
+pub(crate) async fn run_simulation(app: AppHandle, config: GuiConfig) -> Result<(), String> {
     let _ = app.emit("simulation-log", "Simulation started.");
     // let _ = app.emit("simulation-log", format!("config = {:?}", config));
-
-    let _ = std::fs::create_dir_all("./results");
-    let checkpoint_path = "results/checkpoint.bin";
-    let _restart_file = match std::path::Path::new(checkpoint_path).exists() {
-        true => Some(checkpoint_path),
-        false => None,
-    };
-
-    let config = Config {
-        max_n: config.max_n,
-        max_near_n: config.max_near_n,
-        model_scale: config.model_scale,
-        bc_pattern: config.bc_pattern,
-        u_lid: config.u_lid,
-        n_axis: config.n_axis,
-        smooth_length: config.smooth_length,
-        cell_size: config.cell_size,
-        beta: config.beta,
-        cs_rate: config.cs_rate,
-        dx: config.dx,
-        dt: config.dt,
-        out_step: config.out_step,
-        max_step: config.max_step,
-        restart_file: config.restart_file,
-        monitor_particle: config.monitor_particle,
-        log_report: None,
-    };
+    let config = config.into();
 
     std::thread::spawn(move || {
         if let Err(e) = sph::sph(config) {

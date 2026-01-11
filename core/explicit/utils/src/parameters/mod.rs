@@ -9,7 +9,7 @@ pub use boundary_condition::BoundaryCondition;
 pub use config::{Config, ModelScale, Resolution};
 pub use consts::*;
 pub use particle_neighbors::NeighboringList;
-pub use particle_status::{LogReporterFn, Message, ParticleLog};
+pub use particle_status::{LogReporterFn, ParticleLog};
 pub use particles::Particle;
 
 use nalgebra::{self as na};

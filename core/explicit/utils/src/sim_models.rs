@@ -1,7 +1,10 @@
-use super::parameters::{DIM, DX, DY, DZ, MAX_N, NX, NY, NZ, Particle};
-use anyhow::{Context, Result, bail};
+use crate::{
+    error::{FailedFeatureReadFileSnafu, FailedWriteFileSnafu, SimError},
+    parameters::{DIM, ModelScale, Particle, Resolution},
+};
 use csv::ReaderBuilder;
 use serde::Deserialize;
+use snafu::ResultExt as _;
 
 // Structure to hold air data
 #[derive(Debug, Deserialize)]
@@ -20,17 +23,20 @@ struct Airfoil {
 }
 
 // Function to read air space
-fn read_air_space(file_path: &str) -> Result<Vec<AirSpace>> {
+fn read_air_space(file_path: &std::path::Path) -> Result<Vec<AirSpace>, SimError> {
     let mut rdr = ReaderBuilder::new()
         .has_headers(true)
         .from_path(file_path)
-        .context(format!("Failed to read file: {}", file_path))?;
+        .with_context(|_| FailedFeatureReadFileSnafu {
+            path: file_path.to_path_buf(),
+        })?;
 
     let mut air_space_data = Vec::new();
 
     for result in rdr.deserialize() {
-        let record: AirSpace =
-            result.map_err(|err| anyhow::anyhow!("Error deserializing air space data: {}", err))?;
+        let record: AirSpace = result.with_context(|_| FailedFeatureReadFileSnafu {
+            path: file_path.to_path_buf(),
+        })?;
         air_space_data.push(record);
     }
 
@@ -38,17 +44,19 @@ fn read_air_space(file_path: &str) -> Result<Vec<AirSpace>> {
 }
 
 // Function to read airfoil data
-fn read_airfoil_data(file_path: &str) -> Result<Vec<Airfoil>> {
+fn read_airfoil_data(file_path: &std::path::Path) -> Result<Vec<Airfoil>, SimError> {
     let mut rdr = ReaderBuilder::new()
         .has_headers(true)
         .from_path(file_path)
-        .context(format!("Failed to read file: {}", file_path))?;
+        .with_context(|_| FailedFeatureReadFileSnafu {
+            path: file_path.to_path_buf(),
+        })?;
 
     let mut airfoil_data = Vec::new();
-
     for result in rdr.deserialize() {
-        let record: Airfoil =
-            result.map_err(|err| anyhow::anyhow!("Error deserializing airfoil data: {}", err))?;
+        let record: Airfoil = result.with_context(|_| FailedFeatureReadFileSnafu {
+            path: file_path.to_path_buf(),
+        })?;
         airfoil_data.push(record);
     }
 
@@ -60,11 +68,14 @@ fn sim_model(
     particles: &mut [Particle<3>],
     airfoil_data: &[Airfoil],
     air_space_data: &[AirSpace],
-) -> Result<usize> {
+) -> Result<usize, SimError> {
     let n = airfoil_data.len() + air_space_data.len();
 
-    if n > MAX_N {
-        bail!("Particle index is out of range: {} < {}", MAX_N, n);
+    if n > particles.len() {
+        return Err(SimError::ExceededMaxNumber {
+            n,
+            max_n: particles.len(),
+        });
     }
 
     for (i, airfoil) in airfoil_data.iter().enumerate() {
@@ -94,8 +105,8 @@ fn sim_model(
 }
 
 // Function to write particle coordinates to a CSV file
-fn write_coordinates_to_csv(particles: &[Particle<3>]) -> Result<()> {
-    let filename = "./results/model_particles.csv";
+fn write_coordinates_to_csv(particles: &[Particle<3>]) -> Result<(), SimError> {
+    let filename = std::path::Path::new("./results/model_particles.csv");
     let mut csv = String::new();
 
     // Write CSV header
@@ -108,31 +119,43 @@ fn write_coordinates_to_csv(particles: &[Particle<3>]) -> Result<()> {
     }
 
     // Write CSV file
-    std::fs::write(filename, &csv).context(format!("Failed to write to file: {}", filename))?;
+    std::fs::write(filename, &csv).with_context(|_| FailedWriteFileSnafu {
+        path: filename.to_path_buf(),
+    })?;
 
     Ok(())
 }
 
 // Templates: Box Fluid
-fn make_box_model(particles: &mut [Particle<DIM>]) -> Result<usize> {
+fn make_box_model(
+    particles: &mut [Particle<DIM>],
+    model_scale: &ModelScale,
+    resolution: &Resolution,
+) -> Result<usize, SimError> {
     // Particle counter, starts from 0
     let mut n = 0;
 
-    for i in 0..=NX {
-        for j in 0..=NY {
-            for k in 0..=NZ {
+    let (nx, ny, nz) = (
+        (model_scale.length / resolution.dx) as usize,
+        (model_scale.width / resolution.dy) as usize,
+        (model_scale.height / resolution.dz) as usize,
+    );
+
+    for i in 0..=nx {
+        for j in 0..=ny {
+            for k in 0..=nz {
                 // Check if we exceed the maximum number of particles
                 if n >= particles.len() {
-                    bail!(
-                        "Exceeded the maximum number of particles >= {}.",
-                        particles.len()
-                    );
+                    return Err(SimError::ExceededMaxNumber {
+                        n,
+                        max_n: particles.len(),
+                    });
                 }
 
                 // Set particle location
-                particles[n].x[0] = i as f64 * DX; // x
-                particles[n].x[1] = j as f64 * DY; // y
-                particles[n].x[2] = k as f64 * DZ; // z
+                particles[n].x[0] = i as f64 * resolution.dx; // x
+                particles[n].x[1] = j as f64 * resolution.dy; // y
+                particles[n].x[2] = k as f64 * resolution.dz; // z
 
                 n += 1; // Increment particle counter
             }
@@ -151,27 +174,30 @@ fn make_box_model(particles: &mut [Particle<DIM>]) -> Result<usize> {
 
 /// # Errors
 // Making simulation models
-pub fn make_model(model: &str, particles: &mut [Particle<DIM>]) -> Result<usize> {
+pub fn make_model(
+    model: &str,
+    particles: &mut [Particle<DIM>],
+    model_scale: &ModelScale,
+    resolution: &Resolution,
+) -> Result<usize, SimError> {
     if model == "csv" {
         // Read air_space.csv file
-        let air_space_data =
-            read_air_space("src/models/air_space.csv").context("Failed to read air space data")?;
+        let csv_path = std::path::Path::new("src/models/air_space.csv");
+        let air_space_data = read_air_space(csv_path)?;
 
         // Read airfoil data file
-        let airfoil_data = read_airfoil_data("src/models/naca_2412_3d_airfoil.csv")
-            .context("Failed to read airfoil data")?;
+        let csv_path = std::path::Path::new("src/models/naca_2412_3d_airfoil.csv");
+        let airfoil_data = read_airfoil_data(csv_path)?;
 
         // Setting model
-        let n = sim_model(particles, &airfoil_data, &air_space_data)
-            .context("Failed to create model")?;
+        let n = sim_model(particles, &airfoil_data, &air_space_data)?;
 
         // Write particle coordinates to CSV
-        write_coordinates_to_csv(&particles[0..n])
-            .context("Failed to write particle coordinates")?;
+        write_coordinates_to_csv(&particles[0..n])?;
 
         Ok(n)
     } else {
         // Default: Box
-        make_box_model(particles)
+        make_box_model(particles, model_scale, resolution)
     }
 }

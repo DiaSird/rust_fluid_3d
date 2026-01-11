@@ -1,14 +1,16 @@
 use crate::sph_utils::{SphDiff, Velocity};
-use anyhow::{Context, Result};
 use rayon::prelude::*;
-use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
+use utils::{
+    error::SimError,
+    parameters::{DIM, NeighboringList as Neighbor, Particle},
+};
 
 pub(crate) fn update_density(
     dt: f64,
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
     diff_velocity: &mut [Velocity<DIM>],
-) -> Result<()> {
+) -> Result<(), SimError> {
     // Total particles
     let n = particles.len();
 
@@ -16,10 +18,7 @@ pub(crate) fn update_density(
     diff_velocity[..n]
         .par_iter_mut()
         .enumerate()
-        .try_for_each(|(i, v)| {
-            v.sph_div(particles, neighbors, i)
-                .context("Failed: div-v in updating density")
-        })?;
+        .try_for_each(|(i, v)| v.sph_div(particles, neighbors, i))?;
 
     // update: rho = -rho * div(velocity) * dt
     particles[..n]
