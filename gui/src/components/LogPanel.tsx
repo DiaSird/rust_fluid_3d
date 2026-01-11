@@ -1,4 +1,4 @@
-import { useParameters } from "./ParameterContext";
+import { useParameters } from "./providers/parameters/ParameterContext";
 
 export const LogPanel: React.FC = () => {
   const { log } = useParameters();

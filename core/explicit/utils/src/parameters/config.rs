@@ -1,4 +1,4 @@
-use crate::parameters::{BC, LogReporterFn};
+use crate::parameters::{BC, LogReporterFn, particle_status::StopJudgeFn};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ModelScale {
@@ -51,6 +51,8 @@ pub struct Config {
     pub monitor_particle: usize,
     #[serde(skip)]
     pub log_report: Option<LogReporterFn>,
+    #[serde(skip)]
+    pub stop_step: Option<StopJudgeFn>,
 }
 
 impl Default for Config {
@@ -94,6 +96,7 @@ impl Default for Config {
             out_file: std::path::PathBuf::from("./sim_checkpoint.bin"),
             monitor_particle: 0,
             log_report: None,
+            stop_step: None,
         }
     }
 }

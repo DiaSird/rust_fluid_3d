@@ -1,6 +1,5 @@
-use sph::sph;
-use tauri::{Emitter, Window};
-use utils::parameters::{BC, Config, ModelScale, Resolution};
+use tauri::{Emitter, Listener, Window};
+use utils::parameters::{BC, Config, ModelScale, Resolution, StopJudgeFn};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub(crate) struct GuiConfig {
@@ -60,7 +59,7 @@ impl From<GuiConfig> for Config {
 }
 
 /// Create closure that reports.
-pub(super) fn sender<S>(window: Window, event: &'static str) -> impl Fn(S) + Clone
+fn sender<S>(window: Window, event: &'static str) -> impl Fn(S) + Clone
 where
     S: serde::Serialize + Clone,
 {
@@ -72,11 +71,24 @@ where
     }
 }
 
-#[tauri::command]
-pub(crate) async fn run_simulation(windows: Window, config: GuiConfig) -> Result<(), String> {
-    let _ = windows.emit("terra://simulation-log", "Simulation started.");
-    let mut config: Config = config.into();
-    config.log_report = Some(Box::new(sender(windows, "terra://simulation-log")));
+fn new_stop_listener(window: Window) -> StopJudgeFn {
+    let stop_flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    {
+        let stop_flag = std::sync::Arc::clone(&stop_flag);
+        window.listen("terra://simulation-stop-event", move |_event| {
+            stop_flag.store(true, std::sync::atomic::Ordering::Release);
+        });
+    }
 
-    sph::sph(config).map_err(|e| e.to_string())
+    let stop_flag = std::sync::Arc::clone(&stop_flag);
+    Box::new(move |_step| stop_flag.load(std::sync::atomic::Ordering::Acquire))
+}
+
+#[tauri::command]
+pub(crate) async fn run_simulation(window: Window, config: GuiConfig) -> Result<(), String> {
+    let mut config: Config = config.into();
+    config.log_report = Some(Box::new(sender(window.clone(), "terra://simulation-log")));
+    config.stop_step = Some(new_stop_listener(window));
+
+    sph::sph::sph(config).map_err(|e| e.to_string())
 }

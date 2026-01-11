@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { useParameters } from "./ParameterContext";
+import { useParameters } from "./providers/parameters/ParameterContext";
 
 export const ThreeCanvas: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -37,10 +37,7 @@ export const ThreeCanvas: React.FC = () => {
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(
-      mountRef.current.clientWidth,
-      mountRef.current.clientHeight
-    );
+    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     mountRef.current.innerHTML = "";
     mountRef.current.appendChild(renderer.domElement);
 
@@ -69,10 +66,7 @@ export const ThreeCanvas: React.FC = () => {
           }
         }
       }
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3)
-      );
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
       return geometry;
     };
 
@@ -80,7 +74,7 @@ export const ThreeCanvas: React.FC = () => {
       color: 0x44aaff,
       size: Math.min(dx, dy, dz) * 0.2,
     });
-    let particles = new THREE.Points(generateParticles(), material);
+    const particles = new THREE.Points(generateParticles(), material);
     scene.add(particles);
 
     // --- Animation ---
@@ -116,12 +110,13 @@ export const ThreeCanvas: React.FC = () => {
     });
     ro.observe(mountRef.current);
 
+    const mountRef_ = mountRef.current; // NOTE: For eslint checker
     return () => {
       ro.disconnect();
       renderer.dispose();
-      mountRef.current?.removeChild(renderer.domElement);
+      mountRef_?.removeChild(renderer.domElement);
     };
   }, [length, width, height, dx, dy, dz, nx, ny, nz]);
 
-  return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
+  return <div ref={mountRef} style={{ height: "100%", width: "100%" }} />;
 };
