@@ -1,18 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useParameters } from "./ParameterContext";
 
 export const LogPanel: React.FC = () => {
-  const [logs, setLogs] = useState<string[]>([]);
+  const { log, setLog } = useParameters();
 
   useEffect(() => {
-    const unlistenPromise = listen<string>("simulation-log", (event) => {
-      setLogs((prev) => [...prev, event.payload]);
+    const unlistenPromise = listen<string>("terra://simulation-log", (event) => {
+      // console.log(JSON.stringify(event.payload));
+      setLog((prev) => [...prev, JSON.stringify(event.payload)]);
     });
 
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
+    // return () => {
+    //   unlistenPromise.then((unlisten) => unlisten());
+    // };
+  }, [setLog]);
 
   return (
     <div
@@ -26,7 +28,7 @@ export const LogPanel: React.FC = () => {
         fontSize: "12px",
       }}
     >
-      {logs.map((log, i) => (
+      {log.split("\n").map((log, i) => (
         <div key={i} style={{ whiteSpace: "pre-wrap" }}>
           {log}
         </div>
