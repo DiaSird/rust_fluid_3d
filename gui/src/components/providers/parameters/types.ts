@@ -1,5 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
-
 export interface ModelScale {
   length: number;
   width: number;
@@ -48,52 +46,27 @@ export interface Config {
   monitor_particle: number;
 }
 
-export interface ParameterContextProps {
-  max_n: number;
-  setMaxN: Dispatch<SetStateAction<number>>;
-
-  max_near_n: number;
-  setMaxNearN: Dispatch<SetStateAction<number>>;
-
-  model_scale: ModelScale;
-  setModelScale: Dispatch<SetStateAction<ModelScale>>;
-
-  bc_pattern: BC;
-  setBCPattern: Dispatch<SetStateAction<BC>>;
-
-  u_lid: number;
-  setULid: Dispatch<SetStateAction<number>>;
-
-  smooth_length: number;
-  setSmoothLength: Dispatch<SetStateAction<number>>;
-
-  cell_scale: number;
-  setCellScale: Dispatch<SetStateAction<number>>;
-
-  beta: number;
-  setBeta: Dispatch<SetStateAction<number>>;
-
-  cs_rate: number;
-  setCsRate: Dispatch<SetStateAction<number>>;
-
-  dx: Resolution;
-  setDx: Dispatch<SetStateAction<Resolution>>;
-
-  dt: number;
-  setDt: Dispatch<SetStateAction<number>>;
-
-  out_step: number;
-  setOutStep: Dispatch<SetStateAction<number>>;
-
-  max_step: number;
-  setMaxStep: Dispatch<SetStateAction<number>>;
-
-  restart_file: string;
-  setRestartFile: Dispatch<SetStateAction<string>>;
-
-  monitor_particle: number;
-  setMonitorParticle: Dispatch<SetStateAction<number>>;
-
+export interface ParameterState extends Config {
   log: string[];
-  setLog: Dispatch<SetStateAction<string[]>>;
 }
+
+export type ParameterAction =
+  // ========= Config one update =========
+  | { type: "SET_MAX_N"; value: number }
+  | { type: "SET_MAX_NEAR_N"; value: number }
+  | { type: "SET_MODEL_SCALE"; value: ModelScale }
+  | { type: "SET_BC_PATTERN"; value: BC }
+  | { type: "SET_U_LID"; value: number }
+  | { type: "SET_SPH_PARAMS"; value: Partial<Pick<Config, "smooth_length" | "cell_scale" | "beta" | "cs_rate">> }
+  | { type: "SET_DX"; value: Resolution }
+  | { type: "SET_TIME_STEPPING"; value: Partial<Pick<Config, "dt" | "out_step" | "max_step">> }
+  | { type: "SET_MONITOR_PARTICLE"; value: number }
+  | { type: "SET_RESTART_FILE"; value: string }
+
+  // ========= Meta =========
+  | { type: "LOAD_CONFIG"; value: Config }
+  | { type: "RESET_TO_DEFAULT" }
+
+  // ========= Runtime / UI =========
+  | { type: "APPEND_LOG"; value: string }
+  | { type: "CLEAR_LOG" };

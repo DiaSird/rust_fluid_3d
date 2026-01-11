@@ -1,19 +1,18 @@
 import { listen } from "@tauri-apps/api/event";
-import { useParameters } from "../providers/parameters/ParameterContext";
+import { useParameters } from "../providers/parameters/useParameters";
 import { useEffect } from "react";
 import { particleLogToString, type ParticleLogNormalized } from "../../api/log";
 
 export const useWatchLog = () => {
-  const params = useParameters();
+  const { dispatch } = useParameters();
 
   useEffect(() => {
     const unlistenPromise = listen<ParticleLogNormalized>("terra://simulation-log", (event) => {
-      params.setLog((prev) => [...prev, particleLogToString(event.payload)]);
-      // params.setLog((prev) => [...prev, JSON.stringify(event.payload)]);
+      dispatch({ type: "APPEND_LOG", value: particleLogToString(event.payload) });
     });
 
     return () => {
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [params]);
+  }, [dispatch]);
 };

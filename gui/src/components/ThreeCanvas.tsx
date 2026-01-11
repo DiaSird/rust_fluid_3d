@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { useParameters } from "./providers/parameters/ParameterContext";
+import { useParameters } from "./providers/parameters/useParameters";
 
 export const ThreeCanvas: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const { state } = useParameters();
 
-  const { model_scale, dx: resolution } = useParameters();
-  const { length, width, height } = model_scale;
-  const { dx, dy, dz } = resolution;
+  const { length, width, height } = state.model_scale;
+  const { dx, dy, dz } = state.dx;
 
   const { nx, ny, nz } = {
     nx: Math.max(2, Math.floor(length / dx)),

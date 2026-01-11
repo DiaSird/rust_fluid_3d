@@ -1,7 +1,8 @@
-import { useParameters } from "./providers/parameters/ParameterContext";
+import { useParameters } from "./providers/parameters/useParameters";
 
 export const LogPanel: React.FC = () => {
-  const { log } = useParameters();
+  const { state } = useParameters();
+  const { log } = state;
 
   return (
     <div
