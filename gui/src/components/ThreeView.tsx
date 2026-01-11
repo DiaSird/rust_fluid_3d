@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ParameterPanel } from "./ParameterPanel";
 import { ThreeCanvas } from "./ThreeCanvas";
 import { LogPanel } from "./LogPanel";
 import { useParameters, type Config } from "./ParameterContext";
 import { runSimulation } from "../cmd";
+import { listen } from "@tauri-apps/api/event";
 
 export default function ThreeView() {
   const [activeTab, setActiveTab] = useState<"params" | "log">("params");
   const params = useParameters();
+
+  useEffect(() => {
+    const unlistenPromise = listen<string>("terra://simulation-log", (event) => {
+      console.log(JSON.stringify(event.payload));
+      params.setLog((prev) => [...prev, JSON.stringify(event.payload)]);
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, [params]);
 
   // Export parameters and run simulation
   const exportParameters = async () => {
