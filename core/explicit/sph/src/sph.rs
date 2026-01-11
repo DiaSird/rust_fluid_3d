@@ -91,7 +91,7 @@ pub fn sph(config: Config) -> Result<(), SimError> {
     }
 
     #[rustfmt::skip]
-    let k = search_near_particles(&mut particles[0..n], &mut neighbors, smooth_length, cell_scale)?;
+    let k = search_near_particles(&mut particles[0..n], &mut neighbors, max_n * max_near_n, smooth_length, cell_scale)?;
 
     if let Some(log_report) = &log_report {
         #[rustfmt::skip]
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn test_sph() {
         let config = Config {
-            restart_file: Some(std::path::PathBuf::from("sim_ckpt.bin")),
+            restart_file: Some(std::path::PathBuf::from("sim_checkpoint.bin")),
             log_report: Some(Box::new(log_report)),
             ..Default::default()
         };

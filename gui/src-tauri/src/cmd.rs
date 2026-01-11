@@ -52,7 +52,7 @@ impl From<GuiConfig> for Config {
             dt: gui_config.dt,
             out_step: gui_config.out_step,
             max_step: gui_config.max_step,
-            restart_file: gui_config.restart_file,
+            // restart_file: gui_config.restart_file,
             monitor_particle: gui_config.monitor_particle,
             ..Default::default()
         }

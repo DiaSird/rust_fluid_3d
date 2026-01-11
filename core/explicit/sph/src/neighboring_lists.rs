@@ -64,6 +64,7 @@ fn cll_property(particles: &[Particle<DIM>], cell_size: f64) -> (f64, f64, f64, 
 pub(crate) fn search_near_particles(
     particles: &mut [Particle<DIM>],
     neigh_lists: &mut [Neighbor<DIM>],
+    max_pair_n: usize,
     smooth_length: f64,
     cell_scale: f64,
 ) -> Result<usize, SimError> {
@@ -93,10 +94,10 @@ pub(crate) fn search_near_particles(
                             if i != j {
                                 let d = particles[i].x.metric_distance(&particles[j].x);
 
-                                if total_pair >= neighbors.len() {
+                                if total_pair >= max_pair_n {
                                     return Err(SimError::ExceededMaxNumber {
                                         n: total_pair,
-                                        max_n: neighbors.len(),
+                                        max_n: max_pair_n,
                                     });
                                 }
 
