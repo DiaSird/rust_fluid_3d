@@ -1,24 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-
-export interface Config {
-  length: number;
-  width: number;
-  height: number;
-
-  n_axis: number;
-  smooth_length: number;
-  cell_size: number;
-  beta: number;
-  cs_rate: number;
-
-  dx: number;
-  dy: number;
-  dz: number;
-
-  dt: number;
-  out_step: number;
-  max_step: number;
-}
+import { type Config } from "./components/ParameterContext";
 
 export const runSimulation = async (config: Config) => {
   try {
