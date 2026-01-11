@@ -1,29 +1,25 @@
-use super::parameters::{DIM, DX, DY, DZ, HEIGHT, LENGTH, Particle, SMOOTH_LENGTH, WIDTH};
-use anyhow::{Ok, Result};
+use super::parameters::{BC, DIM, DX, DY, DZ, HEIGHT, LENGTH, Particle, SMOOTH_LENGTH, WIDTH};
 use rayon::prelude::*;
 
-const U_LID: f64 = 5.0;
-
-pub fn boundary_condition(particles: &mut [Particle<DIM>]) -> Result<()> {
-    let pattern: usize = 1;
+/// # Errors
+pub fn boundary_condition(particles: &mut [Particle<DIM>], pattern: BC, u_lid: f64) {
     match pattern {
-        1 => cavity_flow(particles),
-        2 => poiseuille_flow(particles),
-        3 => periodic_flow(particles),
-        4 => lid_driven_cavity(particles),
-        _ => Ok(()),
+        BC::CavityFlow => cavity_flow(particles, u_lid),
+        BC::PoiseuilleFlow => poiseuille_flow(particles, u_lid),
+        BC::PeriodicFlow => periodic_flow(particles),
+        BC::LidDrivenCavity => lid_driven_cavity(particles, u_lid),
     }
 }
 
 /// Cavity flow
-pub fn cavity_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
+pub fn cavity_flow(particles: &mut [Particle<DIM>], u_lid: f64) {
     particles.par_iter_mut().for_each(|p| {
         let x = p.x[0];
         let y = p.x[1];
         let z = p.x[2];
 
         if y > WIDTH - SMOOTH_LENGTH {
-            p.v[0] = U_LID;
+            p.v[0] = u_lid;
             p.v[1] = 0.0;
             p.v[2] = 0.0;
         } else if !(DX..=LENGTH - DX).contains(&x) || y < DY || !(DZ..=HEIGHT - DZ).contains(&z) {
@@ -32,15 +28,14 @@ pub fn cavity_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
             p.v[2] = 0.0;
         }
     });
-    Ok(())
 }
 
 /// Poiseuille Flow
-pub fn poiseuille_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
+pub fn poiseuille_flow(particles: &mut [Particle<DIM>], u_lid: f64) {
     particles.par_iter_mut().for_each(|p| {
         let y = p.x[1];
 
-        p.v[0] = 4.0 * U_LID * y * (WIDTH - y) / (WIDTH * WIDTH);
+        p.v[0] = 4.0 * u_lid * y * (WIDTH - y) / (WIDTH * WIDTH);
         p.v[1] = 0.0;
         p.v[2] = 0.0;
 
@@ -51,11 +46,10 @@ pub fn poiseuille_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
             p.v[2] = 0.0;
         }
     });
-    Ok(())
 }
 
 /// Periodic flow
-pub fn periodic_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
+pub fn periodic_flow(particles: &mut [Particle<DIM>]) {
     let x_max = LENGTH;
     particles.par_iter_mut().for_each(|p| {
         if p.x[0] < 0.0 {
@@ -64,20 +58,18 @@ pub fn periodic_flow(particles: &mut [Particle<DIM>]) -> Result<()> {
             p.x[0] -= x_max;
         }
     });
-    Ok(())
 }
 
 // Lid-driven cavity
-pub fn lid_driven_cavity(particles: &mut [Particle<DIM>]) -> Result<()> {
+pub fn lid_driven_cavity(particles: &mut [Particle<DIM>], u_lid: f64) {
     particles.par_iter_mut().for_each(|p| {
         let y = p.x[1];
         if y > WIDTH - SMOOTH_LENGTH {
-            p.v[0] = U_LID;
+            p.v[0] = u_lid;
         } else {
             p.v[0] = 0.0;
         }
         p.v[1] = 0.0;
         p.v[2] = 0.0;
     });
-    Ok(())
 }

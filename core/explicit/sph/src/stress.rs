@@ -1,13 +1,11 @@
-use super::{
-    parameters::{DIM, NeighboringList as Neighbor, Particle},
-    sph_utils::Velocity,
-};
+use super::sph_utils::Velocity;
 use anyhow::{Ok, Result};
 use nalgebra::{self as na, SimdComplexField};
 use rayon::prelude::*;
+use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
 
 // For water
-pub fn tait_eq(particle: &Particle<DIM>) -> f64 {
+fn tait_eq(particle: &Particle<DIM>) -> f64 {
     let gamma = 7.0; // parameter of Tait eq.
     let b = particle.sound_v.simd_powf(2.0) / gamma; // parameter of Tait eq.
     let rho_ratio = particle.rho / particle.rho0;
@@ -16,7 +14,7 @@ pub fn tait_eq(particle: &Particle<DIM>) -> f64 {
     particle.rho0 * b * (rho_ratio.simd_powf(gamma) - 1.0)
 }
 
-pub fn static_stress(particles: &mut [Particle<DIM>]) {
+fn static_stress(particles: &mut [Particle<DIM>]) {
     let identity: na::Matrix3<f64> = na::Matrix3::identity();
 
     particles.par_iter_mut().for_each(|particle| {
@@ -26,7 +24,7 @@ pub fn static_stress(particles: &mut [Particle<DIM>]) {
     });
 }
 
-pub fn viscosity_stress(
+fn viscosity_stress(
     particles: &mut [Particle<DIM>],
     neighbors: &mut [Neighbor<DIM>],
     diff_velocity: &mut [Velocity<DIM>],
@@ -63,7 +61,7 @@ pub fn viscosity_stress(
     }
 }
 
-pub fn update_stress(
+pub(crate) fn update_stress(
     particles: &mut [Particle<DIM>],
     neighbors: &mut [Neighbor<DIM>],
     diff_velocity: &mut [Velocity<DIM>],

@@ -1,12 +1,9 @@
-use super::{
-    parameters::{DIM, NeighboringList as Neighbor, Particle},
-    sph_utils::Velocity,
-};
-use crate::explicit::sph_utils::SphDiff;
+use crate::sph_utils::{SphDiff, Velocity};
 use anyhow::{Context, Result};
 use rayon::prelude::*;
+use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
 
-pub fn update_density(
+pub(crate) fn update_density(
     dt: f64,
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],

@@ -1,10 +1,10 @@
-use super::parameters::{DIM, NeighboringList as Neighbor, Particle};
 use anyhow::{Result, bail};
 use nalgebra::{self as na, SimdComplexField};
+use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
 
 // -- Traits --
 // Standard sph
-pub trait _SphStd {
+pub(crate) trait _SphStd {
     fn sph_std(
         &mut self,
         particles: &[Particle<DIM>],
@@ -14,7 +14,7 @@ pub trait _SphStd {
 }
 
 // Differential sph
-pub trait SphDiff {
+pub(crate) trait SphDiff {
     fn _sph_grad(
         &mut self,
         particles: &[Particle<DIM>],

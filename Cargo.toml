@@ -11,7 +11,7 @@ rust-version = "1.91"
 version = "0.1.0"
 
 [workspace]
-members = ["core", "gui/src-tauri"]
+members = ["core/explicit/utils", "core/explicit/sph", "gui/src-tauri"]
 resolver = "3"
 default-members = ["gui/src-tauri"]
 
@@ -19,7 +19,8 @@ default-members = ["gui/src-tauri"]
 tracing = "0.1.43"
 
 # workspace members
-rust_fluid_3d = { path = "./core" }
+utils = { path = "./core/explicit/utils" }
+sph = { path = "./core/explicit/sph" }
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }

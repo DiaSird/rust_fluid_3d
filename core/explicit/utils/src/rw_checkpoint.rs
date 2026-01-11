@@ -1,6 +1,5 @@
-use crate::explicit::parameters::Particle;
+use crate::parameters::Particle;
 use anyhow::Result;
-use postcard;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
@@ -14,14 +13,19 @@ pub struct State<const D: usize> {
     pub particles: Vec<Particle<D>>,
 }
 
-pub fn load_checkpoint<const D: usize>(path: &str) -> Result<State<D>> {
+/// # Errors
+pub fn load_checkpoint<const D: usize, P>(path: P) -> Result<State<D>>
+where
+    P: AsRef<std::path::Path>,
+{
     let buf = std::fs::read(path)?;
     let state: State<D> = postcard::from_bytes(&buf)?;
     Ok(state)
 }
 
+/// # Errors
 pub fn write_checkpoint<const D: usize>(
-    path: &str,
+    path: impl AsRef<std::path::Path>,
     state: &State<D>,
     buffer_size: usize,
 ) -> anyhow::Result<()> {
@@ -36,7 +40,7 @@ pub fn write_checkpoint<const D: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::explicit::parameters::{DIM, Fluid, Particle};
+    use crate::parameters::{DIM, Fluid, Particle};
     use std::fs;
 
     #[test]
@@ -62,7 +66,7 @@ mod tests {
 
         write_checkpoint(test_file, &state, 1024 * 120).expect("write failed");
 
-        let state = load_checkpoint::<DIM>(test_file).expect("load failed");
+        let state = load_checkpoint::<DIM, _>(test_file).expect("load failed");
         let loaded_step = state.step;
         let loaded_time = state.time;
         let loaded_dt = state.dt;

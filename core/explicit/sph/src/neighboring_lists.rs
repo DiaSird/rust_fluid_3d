@@ -1,13 +1,13 @@
-use super::parameters::{
-    CELL_SIZE, DIM, MAX_NEAR_SUM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH,
-};
 use anyhow::{Context as _, Result, bail};
 use nalgebra as na;
 use nalgebra::SimdComplexField;
 use std::collections::HashMap;
+use utils::parameters::{
+    CELL_SIZE, DIM, MAX_NEAR_SUM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH,
+};
 
 // Kernel function
-pub fn b_spline_kernel(q: f64) -> (f64, f64) {
+fn b_spline_kernel(q: f64) -> (f64, f64) {
     match q {
         0.0..=1.0 => {
             let q2 = q.simd_powf(2.0);
@@ -27,7 +27,7 @@ pub fn b_spline_kernel(q: f64) -> (f64, f64) {
 
 type Grid = HashMap<(usize, usize, usize), Vec<usize>>;
 
-pub fn cll_property(particles: &[Particle<DIM>]) -> (f64, f64, f64, Grid) {
+fn cll_property(particles: &[Particle<DIM>]) -> (f64, f64, f64, Grid) {
     // HashMap for cell layout
     let mut grid: Grid = HashMap::new();
 
@@ -61,7 +61,7 @@ pub fn cll_property(particles: &[Particle<DIM>]) -> (f64, f64, f64, Grid) {
 }
 
 // Searching
-pub fn search_near_particles(
+pub(crate) fn search_near_particles(
     particles: &mut [Particle<DIM>],
     neigh_lists: &mut [Neighbor<DIM>],
 ) -> Result<usize> {
@@ -128,7 +128,7 @@ pub fn search_near_particles(
     }
 
     make_neighboring_list(particles, &neigh_lists[0..total_pair]);
-    write_kernel_to_csv(particles, &neigh_lists[0..total_pair])?;
+    // write_kernel_to_csv(particles, &neigh_lists[0..total_pair])?;
 
     Ok(total_pair)
 }
@@ -141,7 +141,8 @@ pub fn make_neighboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neigh
 }
 
 // Write only the particles created
-pub fn write_kernel_to_csv(particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>]) -> Result<()> {
+#[allow()]
+fn write_kernel_to_csv(particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>]) -> Result<()> {
     let filename = "./results/kernel.csv";
     let mut csv = String::new();
 

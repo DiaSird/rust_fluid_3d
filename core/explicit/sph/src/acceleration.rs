@@ -1,12 +1,10 @@
-use super::{
-    parameters::{DIM, NeighboringList as Neighbor, Particle},
-    sph_utils::{SphDiff, Tensor},
-};
+use super::sph_utils::{SphDiff, Tensor};
 use anyhow::{Context, Result, bail};
 use nalgebra as na;
 use rayon::prelude::*;
+use utils::parameters::{DIM, NeighboringList as Neighbor, Particle};
 
-pub fn update_acceleration(
+pub(crate) fn update_acceleration(
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
     diff_stress: &mut [Tensor<DIM>],

@@ -1,8 +1,11 @@
+use crate::parameters::{LogReporterFn, ParticleLog};
+
 use super::parameters::{DIM, Particle};
 use super::rw_checkpoint;
 use anyhow::{Context, Ok, Result};
-use tauri::{AppHandle, Emitter};
+use nalgebra as na;
 
+/// # Errors
 pub fn write_result(step: usize, particles: &[Particle<DIM>]) -> Result<()> {
     // Velocity
     write_velocity_to_csv(step, particles)?;
@@ -10,6 +13,7 @@ pub fn write_result(step: usize, particles: &[Particle<DIM>]) -> Result<()> {
     Ok(())
 }
 
+/// # Errors
 pub fn write_velocity_to_csv(step: usize, particles: &[Particle<DIM>]) -> Result<()> {
     let filename = format!("./results/result_{}.csv", step);
     let mut csv = String::new();
@@ -32,47 +36,50 @@ pub fn write_velocity_to_csv(step: usize, particles: &[Particle<DIM>]) -> Result
     Ok(())
 }
 
+/// # Errors
+/// let log = format!(
+///     "------------------------------------------\n\
+///  Step {}, time = {:.3} [ms]\n\
+///      Particle: {}\n\
+///      (x, y, z) = {:.3}, {:.3}, {:.3}\n\
+///      (vx, vy, vz) = {:.3}, {:.3}, {:.3}\n\
+///      (ax, ay, az) = {:.3}, {:.3}, {:.3}\n\
+/// ------------------------------------------",
+///     step,
+///     time * 1000.0,
+///     i,
+///     x,
+///     y,
+///     z,
+///     vx,
+///     vy,
+///     vz,
+///     ax,
+///     ay,
+///     az
+/// );
 pub fn display_result(
-    app: &AppHandle,
+    monitor_particle: usize,
+    status: &LogReporterFn,
     step: usize,
     time: f64,
     particles: &[Particle<DIM>],
-) -> Result<()> {
-    // let i: usize = 10;
-    let i: usize = 1000;
-    let (x, y, z) = particles[i].axis();
-    let (vx, vy, vz) = particles[i].velocity();
-    let (ax, ay, az) = particles[i].accel();
+) {
+    let x: [f64; DIM] = particles[monitor_particle].axis().into();
+    let v: [f64; DIM] = particles[monitor_particle].velocity().into();
+    let dvdt: [f64; DIM] = particles[monitor_particle].accel().into();
 
-    let log = format!(
-        "------------------------------------------\n\
-     Step {}, time = {:.3} [ms]\n\
-         Particle: {}\n\
-         (x, y, z) = {:.3}, {:.3}, {:.3}\n\
-         (vx, vy, vz) = {:.3}, {:.3}, {:.3}\n\
-         (ax, ay, az) = {:.3}, {:.3}, {:.3}\n\
-    ------------------------------------------",
-        step,
-        time * 1000.0,
-        i,
-        x,
-        y,
-        z,
-        vx,
-        vy,
-        vz,
-        ax,
-        ay,
-        az
-    );
+    let x = na::Vector3::from(x);
+    let v = na::Vector3::from(v);
+    let dvdt = na::Vector3::from(dvdt);
 
-    app.emit("simulation-log", log)
-        .context("Failed to emit simulation log")?;
-
-    Ok(())
+    #[rustfmt::skip]
+    status(ParticleLog::Info3 { step, time, monitor_particle, x, v, dvdt });
 }
 
+/// # Errors
 pub fn write_sim_checkpoint(
+    out_file: impl AsRef<std::path::Path>,
     step: usize,
     time: f64,
     dt: f64,
@@ -86,11 +93,6 @@ pub fn write_sim_checkpoint(
         n,
         particles: particles[0..n].to_vec(),
     };
-    rw_checkpoint::write_checkpoint(
-        "results/checkpoint.bin",
-        // &format!("results/checkpoint_{:08}.bin", step),
-        &state,
-        1024 * 10000,
-    )?;
+    rw_checkpoint::write_checkpoint(out_file, &state, 1024 * 10000)?;
     Ok(())
 }

@@ -1,9 +1,9 @@
-use super::parameters::{BETA, DIM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH};
 use anyhow::Result;
 use nalgebra as na;
 use rayon::prelude::*;
+use utils::parameters::{BETA, DIM, NeighboringList as Neighbor, Particle, SMOOTH_LENGTH};
 
-pub fn update_artificial_viscosity(
+pub(crate) fn update_artificial_viscosity(
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
 ) -> Result<()> {

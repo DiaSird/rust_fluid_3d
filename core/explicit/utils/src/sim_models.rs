@@ -144,11 +144,12 @@ fn make_box_model(particles: &mut [Particle<DIM>]) -> Result<usize> {
     }
 
     // Debug
-    write_coordinates_to_csv(&particles[0..n]).context("Failed to write particle coordinates")?;
+    // write_coordinates_to_csv(&particles[0..n]).context("Failed to write particle coordinates")?;
 
     Ok(n)
 }
 
+/// # Errors
 // Making simulation models
 pub fn make_model(model: &str, particles: &mut [Particle<DIM>]) -> Result<usize> {
     if model == "csv" {

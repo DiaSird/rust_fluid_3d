@@ -1,7 +1,7 @@
-use super::parameters::{CS_RATE, DIM, MAX_N, NeighboringList as Neighbor, Particle};
 use anyhow::{Ok, Result};
 use nalgebra as na;
 use rayon::prelude::*;
+use utils::parameters::{CS_RATE, DIM, MAX_N, NeighboringList as Neighbor, Particle};
 
 struct CsValue {
     /// SPH Velocity [m/s]
@@ -19,7 +19,7 @@ impl CsValue {
     }
 }
 
-pub fn conservative_smoothing(
+pub(crate) fn conservative_smoothing(
     particles: &mut [Particle<DIM>],
     neighbors: &[Neighbor<DIM>],
 ) -> Result<()> {
