@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 
 export interface ModelScale {
   length: number;
@@ -83,8 +83,8 @@ interface ParameterContextProps {
   monitor_particle: number;
   setMonitorParticle: (v: number) => void;
 
-  log: string;
-  setLog: (v: string) => void;
+  log: string[];
+  setLog: Dispatch<SetStateAction<string[]>>;
 }
 
 export const ParameterContext = createContext<ParameterContextProps | undefined>(undefined);
@@ -129,7 +129,7 @@ export const ParameterProvider = ({ children }: { children: ReactNode }) => {
   const [restart_file, setRestartFile] = useState<string | undefined>("sim_checkpoint.bin");
   const [monitor_particle, setMonitorParticle] = useState(0);
 
-  const [log, setLog] = useState("");
+  const [log, setLog] = useState([]);
 
   return (
     <ParameterContext.Provider

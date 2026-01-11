@@ -5,9 +5,9 @@ export const runSimulation = async (config: Config) => {
   try {
     // Run tauri command
     await invoke("run_simulation", { config });
-    alert("Simulation started.");
+    // alert("Simulation started.");
   } catch (err) {
     console.error(err);
-    alert(`Simulation failed: ${err}`);
+    // alert(`Simulation failed: ${err}`);
   }
 };
