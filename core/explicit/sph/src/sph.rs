@@ -12,8 +12,8 @@ use utils::{
     bs_settings::boundary_condition,
     cfl_condition::cfl_dt,
     error::SimError,
-    parameters::{Config, DIM, Fluid, NeighboringList as Neighbor, Particle},
-    rw_checkpoint,
+    parameters::{CheckpointConfig, Config, DIM, Fluid, NeighboringList as Neighbor, Particle},
+    rw_checkpoint::{self, read_checkpoint_and_set_buffer},
     sim_models::make_model,
     write_csv::display_result,
 };
@@ -24,11 +24,17 @@ use utils::{
 pub fn sph(config: Config) -> Result<(), SimError> {
     #[rustfmt::skip]
     let Config {
+        checkpoint_config: mut ckpt_config,
+        log_report, stop_step,
+    } = config;
+
+    #[rustfmt::skip]
+    let CheckpointConfig {
         max_n, max_near_n, model_scale, bc_pattern, u_lid,
         smooth_length, cell_scale, beta, cs_rate,
-        dx, mut dt, out_step, max_step, restart_file, out_file,
-        monitor_particle, log_report, stop_step,
-    } = config;
+        dx, mut dt, out_step, 
+        max_step, restart_file, out_file, monitor_particle,
+    } = ckpt_config.clone();
 
     // Initialize
     let mut time = 0.0;
@@ -36,18 +42,23 @@ pub fn sph(config: Config) -> Result<(), SimError> {
     let _ = Fluid::Air;
 
     let mut particles: Vec<Particle<DIM>>;
+    let mut neighbors: Vec<Neighbor<DIM>>;
     let mut step: usize;
 
     // Model particles
     if let Some(file) = restart_file {
         // Load checkpoint
-        let state = rw_checkpoint::load_checkpoint::<DIM, _>(&file)?;
+        let buf = read_checkpoint_and_set_buffer(&file)?;
+        let state = rw_checkpoint::load_data_from_checkpoint::<DIM, _>(&file, &buf)?;
 
-        // restore next steps
-        particles = state.particles;
+        // Restore Config for next steps
+        ckpt_config = state.checkpoint_config.into_owned();
+        step = state.step + 1; // Start the next step.
         time = state.time;
-        dt = state.dt;
-        step = state.step + 1;
+
+        // Restore Particles and Neighbors
+        particles = state.particles.to_vec();
+        neighbors = state.neighbors.to_vec();
 
         let log = format!(
             "Restarted from checkpoint {} at step {}, time {:.3} [ms]",
@@ -60,15 +71,13 @@ pub fn sph(config: Config) -> Result<(), SimError> {
             log_report(utils::parameters::ParticleLog::LogInfo(log));
         }
     } else {
-        // Initialize
-        particles = (0..max_n).map(|_| Particle::new(water)).collect();
+        // Initialize step, Particles and Neighbors
         step = 1;
+        particles = (0..max_n).map(|_| Particle::new(water)).collect();
+        neighbors = (0..max_n * max_near_n)
+            .map(|_| Neighbor::default())
+            .collect();
     }
-
-    // Neighbor particles
-    let mut neighbors: Vec<Neighbor<DIM>> = (0..max_n * max_near_n)
-        .map(|_| Neighbor::default())
-        .collect();
 
     // Gradient and div particles
     let mut diff_velocity: Vec<Velocity<DIM>> = (0..max_n).map(|_| Velocity::new()).collect();
@@ -128,7 +137,8 @@ pub fn sph(config: Config) -> Result<(), SimError> {
                 #[rustfmt::skip]
                 display_result(monitor_particle, log_report, step, time, &particles[0..n]);
             }
-            rw_checkpoint::write_sim_checkpoint(&out_file, step, time, dt, n, &particles[0..n])?;
+            #[rustfmt::skip]
+            rw_checkpoint::write_sim_checkpoint(&out_file, &ckpt_config, &particles[0..n], &neighbors[0..k], step, time)?;
         }
 
         if let Some(stop_step) = &stop_step
@@ -152,8 +162,14 @@ mod tests {
     /// Test SPH on background
     #[test]
     fn test_sph() {
+        let bin_file = std::path::PathBuf::from("sim_checkpoint.bin");
+        let checkpoint_config = CheckpointConfig {
+            out_file: bin_file,
+            restart_file: None,
+            ..Default::default()
+        };
         let config = Config {
-            restart_file: Some(std::path::PathBuf::from("sim_checkpoint.bin")),
+            checkpoint_config,
             log_report: Some(Box::new(log_report)),
             ..Default::default()
         };

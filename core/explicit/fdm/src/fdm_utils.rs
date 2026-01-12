@@ -1,15 +1,15 @@
 use nalgebra::{self as na, SimdComplexField};
 use utils::{
-    error::{SimError, check_nan_to_error},
-    parameters::{DIM, NeighboringList as Neighbor, Particle},
+    error::{check_nan_to_error, SimError},
+    parameters::{NeighboringList as Neighbor, Particle, DIM},
 };
 
 // -- Traits --
-// Standard sph
-pub(crate) trait _SphStd {
+// Standard fdm
+pub(crate) trait _FdmStd {
     type Error;
 
-    fn sph_std(
+    fn fdm_std(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
@@ -21,14 +21,14 @@ pub(crate) trait _SphStd {
 pub(crate) trait SphDiff {
     type Error;
 
-    fn _sph_grad(
+    fn _fdm_grad(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
         i: usize,
     ) -> Result<(), Self::Error>;
 
-    fn sph_div(
+    fn fdm_div(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
@@ -56,7 +56,7 @@ impl<const D: usize> Velocity<D> {
 impl<const D: usize> SphDiff for Velocity<D> {
     type Error = SimError;
 
-    fn _sph_grad(
+    fn _fdm_grad(
         &mut self,
         _particles: &[Particle<DIM>],
         _neighbors: &[Neighbor<DIM>],
@@ -66,7 +66,7 @@ impl<const D: usize> SphDiff for Velocity<D> {
     }
 
     // Todo: Generic Vector (velocity -> vector3)
-    fn sph_div(
+    fn fdm_div(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],
@@ -78,7 +78,7 @@ impl<const D: usize> SphDiff for Velocity<D> {
         };
         let end: usize = particles[i].pair;
 
-        // sph referred to neighboring list (pair: start -> end)
+        // fdm referred to neighboring list (pair: start -> end)
         for neigh in neighbors.iter().take(end + 1).skip(start) {
             let j = neigh.j;
             let vi = na::Vector3::from(particles[i].v);
@@ -112,10 +112,10 @@ impl Tensor<DIM> {
     }
 }
 
-impl SphDiff for Tensor<DIM> {
+impl FdmDiff for Tensor<DIM> {
     type Error = SimError;
 
-    fn _sph_grad(
+    fn _fdm_grad(
         &mut self,
         _particles: &[Particle<DIM>],
         _neighbors: &[Neighbor<DIM>],
@@ -125,7 +125,7 @@ impl SphDiff for Tensor<DIM> {
         Ok(())
     }
 
-    fn sph_div(
+    fn fdm_div(
         &mut self,
         particles: &[Particle<DIM>],
         neighbors: &[Neighbor<DIM>],

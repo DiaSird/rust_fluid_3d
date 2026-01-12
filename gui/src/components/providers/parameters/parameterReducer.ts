@@ -1,7 +1,10 @@
 import { INITIAL_PARAMETER_STATE } from "./initialParameterState";
 import type { ParameterState, ParameterAction } from "./types";
 
-export const parameterReducer = (state: ParameterState, action: ParameterAction): ParameterState => {
+export const parameterReducer = (
+  state: ParameterState,
+  action: ParameterAction
+): ParameterState => {
   switch (action.type) {
     // ========= Config one update =========
     case "SET_MAX_N":
@@ -64,6 +67,9 @@ export const parameterReducer = (state: ParameterState, action: ParameterAction)
 
     case "CLEAR_LOG":
       return { ...state, log: [] };
+
+    case "SET_IS_RUNNING":
+      return { ...state, isRunning: action.value };
 
     default: {
       // Exhaustiveness check (compile-time safety)

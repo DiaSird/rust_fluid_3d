@@ -1,27 +1,36 @@
 import { emit } from "@tauri-apps/api/event";
 import { useParameters } from "./providers/parameters/useParameters";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { runSimulation } from "../api/simulation";
 
 export const RunStopButton: React.FC = () => {
-  const { state } = useParameters();
-  const [isRunning, setIsRunning] = useState(false);
+  const { state, dispatch } = useParameters();
 
   const handleRun = useCallback(async () => {
-    setIsRunning(true);
+    dispatch({
+      type: "SET_IS_RUNNING",
+      value: true,
+    });
+
     try {
       await runSimulation(state);
     } finally {
-      setIsRunning(false);
+      dispatch({
+        type: "SET_IS_RUNNING",
+        value: false,
+      });
     }
-  }, [state]);
+  }, [dispatch, state]);
 
   const handleStop = async () => {
     await emit("terra://simulation-stop-event");
-    setIsRunning(false);
+    dispatch({
+      type: "SET_IS_RUNNING",
+      value: false,
+    });
   };
 
-  return !isRunning ? (
+  return !state.isRunning ? (
     <button style={runStyle} onClick={handleRun}>
       Run
     </button>

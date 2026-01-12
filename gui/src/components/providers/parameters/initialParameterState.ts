@@ -1,6 +1,7 @@
 import type { ParameterState } from "./types";
 
-export const INITIAL_PARAMETER_STATE: ParameterState = {
+// Initial state for simulation parameters
+export const INITIAL_PARAMETER_STATE = {
   max_n: 60000,
   max_near_n: 100,
 
@@ -28,4 +29,5 @@ export const INITIAL_PARAMETER_STATE: ParameterState = {
   monitor_particle: 0,
 
   log: [""],
-};
+  isRunning: false,
+} as const satisfies ParameterState;

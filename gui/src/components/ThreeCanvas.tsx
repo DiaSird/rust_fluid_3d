@@ -37,7 +37,10 @@ export const ThreeCanvas: React.FC = () => {
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+    renderer.setSize(
+      mountRef.current.clientWidth,
+      mountRef.current.clientHeight
+    );
     mountRef.current.innerHTML = "";
     mountRef.current.appendChild(renderer.domElement);
 
@@ -66,7 +69,10 @@ export const ThreeCanvas: React.FC = () => {
           }
         }
       }
-      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(positions, 3)
+      );
       return geometry;
     };
 
@@ -81,7 +87,9 @@ export const ThreeCanvas: React.FC = () => {
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
-      particles.rotation.y += 0.001;
+      if (!state.isRunning) {
+        particles.rotation.y += 0.001;
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -116,7 +124,7 @@ export const ThreeCanvas: React.FC = () => {
       renderer.dispose();
       mountRef_?.removeChild(renderer.domElement);
     };
-  }, [length, width, height, dx, dy, dz, nx, ny, nz]);
+  }, [length, width, height, dx, dy, dz, nx, ny, nz, state.isRunning]);
 
   return <div ref={mountRef} style={{ height: "100%", width: "100%" }} />;
 };

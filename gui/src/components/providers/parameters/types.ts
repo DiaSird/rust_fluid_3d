@@ -11,7 +11,12 @@ export interface Resolution {
 }
 
 /** Boundary Condition */
-export const BC_OPTIONS = ["Cavity-Flow", "Poiseuille-Flow", "Periodic-Flow", "LidDrivenCavity"] as const;
+export const BC_OPTIONS = [
+  "Cavity-Flow",
+  "Poiseuille-Flow",
+  "Periodic-Flow",
+  "LidDrivenCavity",
+] as const;
 
 export type BC = (typeof BC_OPTIONS)[number];
 
@@ -48,6 +53,7 @@ export interface Config {
 
 export interface ParameterState extends Config {
   log: string[];
+  isRunning: boolean;
 }
 
 export type ParameterAction =
@@ -57,9 +63,17 @@ export type ParameterAction =
   | { type: "SET_MODEL_SCALE"; value: ModelScale }
   | { type: "SET_BC_PATTERN"; value: BC }
   | { type: "SET_U_LID"; value: number }
-  | { type: "SET_SPH_PARAMS"; value: Partial<Pick<Config, "smooth_length" | "cell_scale" | "beta" | "cs_rate">> }
+  | {
+      type: "SET_SPH_PARAMS";
+      value: Partial<
+        Pick<Config, "smooth_length" | "cell_scale" | "beta" | "cs_rate">
+      >;
+    }
   | { type: "SET_DX"; value: Resolution }
-  | { type: "SET_TIME_STEPPING"; value: Partial<Pick<Config, "dt" | "out_step" | "max_step">> }
+  | {
+      type: "SET_TIME_STEPPING";
+      value: Partial<Pick<Config, "dt" | "out_step" | "max_step">>;
+    }
   | { type: "SET_MONITOR_PARTICLE"; value: number }
   | { type: "SET_RESTART_FILE"; value: string }
 
@@ -69,4 +83,5 @@ export type ParameterAction =
 
   // ========= Runtime / UI =========
   | { type: "APPEND_LOG"; value: string }
-  | { type: "CLEAR_LOG" };
+  | { type: "CLEAR_LOG" }
+  | { type: "SET_IS_RUNNING"; value: boolean };

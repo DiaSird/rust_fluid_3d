@@ -1,7 +1,7 @@
 use crate::parameters::Vector;
 
 // SPH Neighboring List
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct NeighboringList<const DIM: usize> {
     pub i: usize, // pair i
     pub j: usize, // pair j

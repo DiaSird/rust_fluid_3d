@@ -1,5 +1,5 @@
 /target
-/results/*.bin
 /results/*.csv
 /results/*.mp4
 src/models/*
+*.bin

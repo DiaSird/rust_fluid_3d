@@ -1,5 +1,5 @@
 use tauri::{Emitter, Listener, Window};
-use utils::parameters::{BC, Config, ModelScale, Resolution, StopJudgeFn};
+use utils::parameters::{BC, CheckpointConfig, Config, ModelScale, Resolution, StopJudgeFn};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub(crate) struct GuiConfig {
@@ -37,22 +37,29 @@ pub(crate) struct GuiConfig {
 
 impl From<GuiConfig> for Config {
     fn from(gui_config: GuiConfig) -> Self {
+        let restart_file = match gui_config.restart_file {
+            Some(restart_file) if restart_file.exists() => Some(restart_file),
+            _ => None,
+        };
         Self {
-            max_n: gui_config.max_n,
-            max_near_n: gui_config.max_near_n,
-            model_scale: gui_config.model_scale,
-            bc_pattern: gui_config.bc_pattern,
-            u_lid: gui_config.u_lid,
-            smooth_length: gui_config.smooth_length,
-            cell_scale: gui_config.cell_scale,
-            beta: gui_config.beta,
-            cs_rate: gui_config.cs_rate,
-            dx: gui_config.dx,
-            dt: gui_config.dt,
-            out_step: gui_config.out_step,
-            max_step: gui_config.max_step,
-            // restart_file: gui_config.restart_file,
-            monitor_particle: gui_config.monitor_particle,
+            checkpoint_config: CheckpointConfig {
+                max_n: gui_config.max_n,
+                max_near_n: gui_config.max_near_n,
+                model_scale: gui_config.model_scale,
+                bc_pattern: gui_config.bc_pattern,
+                u_lid: gui_config.u_lid,
+                smooth_length: gui_config.smooth_length,
+                cell_scale: gui_config.cell_scale,
+                beta: gui_config.beta,
+                cs_rate: gui_config.cs_rate,
+                dx: gui_config.dx,
+                dt: gui_config.dt,
+                out_step: gui_config.out_step,
+                max_step: gui_config.max_step,
+                restart_file,
+                monitor_particle: gui_config.monitor_particle,
+                ..Default::default()
+            },
             ..Default::default()
         }
     }

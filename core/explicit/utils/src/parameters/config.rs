@@ -1,6 +1,6 @@
 use crate::parameters::{BC, LogReporterFn, particle_status::StopJudgeFn};
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ModelScale {
     // Model size
     pub length: f64,
@@ -8,7 +8,7 @@ pub struct ModelScale {
     pub height: f64,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Resolution {
     // Resolution
     pub dx: f64,
@@ -16,8 +16,17 @@ pub struct Resolution {
     pub dz: f64,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct Config {
+    pub checkpoint_config: CheckpointConfig,
+    #[serde(skip)]
+    pub log_report: Option<LogReporterFn>,
+    #[serde(skip)]
+    pub stop_step: Option<StopJudgeFn>,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct CheckpointConfig {
     /// Max particles
     pub max_n: usize,
     pub max_near_n: usize,
@@ -49,13 +58,9 @@ pub struct Config {
 
     // Monitoring and log report
     pub monitor_particle: usize,
-    #[serde(skip)]
-    pub log_report: Option<LogReporterFn>,
-    #[serde(skip)]
-    pub stop_step: Option<StopJudgeFn>,
 }
 
-impl Default for Config {
+impl Default for CheckpointConfig {
     fn default() -> Self {
         Self {
             // particle config
@@ -95,8 +100,6 @@ impl Default for Config {
             restart_file: None,
             out_file: std::path::PathBuf::from("./sim_checkpoint.bin"),
             monitor_particle: 0,
-            log_report: None,
-            stop_step: None,
         }
     }
 }
