@@ -18,6 +18,7 @@ export const DrawParticleButton: React.FC = () => {
           type: "SET_GUI_STATE",
           value: guiState,
         });
+        console.log("SET_GUI_STATE: Success to read state!");
       } else {
         console.log("SET_GUI_STATE: Failed to read state.");
       }

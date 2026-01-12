@@ -71,6 +71,9 @@ export const parameterReducer = (
     case "SET_IS_RUNNING":
       return { ...state, isRunning: action.value };
 
+    case "SET_GUI_STATE":
+      return { ...state, guiState: action.value };
+
     default: {
       // Exhaustiveness check (compile-time safety)
       return state;
