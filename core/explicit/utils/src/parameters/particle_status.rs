@@ -2,6 +2,7 @@ use crate::parameters::Vector;
 use std::fmt::Debug;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", content = "data")]
 pub enum ParticleLog {
     RestartInfo {
         step: Option<usize>,
@@ -26,3 +27,6 @@ pub enum ParticleLog {
 
 // type alias: Reporting particle status
 pub type LogReporterFn = Box<dyn Fn(ParticleLog) + Send + Sync>;
+/// (step: usize) -> bool
+/// - true: then stop simulation
+pub type StopJudgeFn = Box<dyn Fn(usize) -> bool + Send + Sync>;

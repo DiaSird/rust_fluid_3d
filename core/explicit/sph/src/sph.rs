@@ -27,7 +27,7 @@ pub fn sph(config: Config) -> Result<(), SimError> {
         max_n, max_near_n, model_scale, bc_pattern, u_lid,
         smooth_length, cell_scale, beta, cs_rate,
         dx, mut dt, out_step, max_step, restart_file, out_file,
-        monitor_particle, log_report,
+        monitor_particle, log_report, stop_step,
     } = config;
 
     // Initialize
@@ -129,6 +129,12 @@ pub fn sph(config: Config) -> Result<(), SimError> {
                 display_result(monitor_particle, log_report, step, time, &particles[0..n]);
             }
             rw_checkpoint::write_sim_checkpoint(&out_file, step, time, dt, n, &particles[0..n])?;
+        }
+
+        if let Some(stop_step) = &stop_step
+            && stop_step(step + 1)
+        {
+            break;
         }
 
         // Increment
