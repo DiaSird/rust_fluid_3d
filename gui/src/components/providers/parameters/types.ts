@@ -1,3 +1,5 @@
+import type { GuiState } from "../../../api/simulation";
+
 export type Vector3 = [number, number, number];
 
 export type Matrix3 = [
@@ -62,6 +64,7 @@ export interface Config {
 export interface ParameterState extends Config {
   log: string[];
   isRunning: boolean;
+  guiState?: GuiState;
 }
 
 export type ParameterAction =
@@ -92,4 +95,5 @@ export type ParameterAction =
   // ========= Runtime / UI =========
   | { type: "APPEND_LOG"; value: string }
   | { type: "CLEAR_LOG" }
-  | { type: "SET_IS_RUNNING"; value: boolean };
+  | { type: "SET_IS_RUNNING"; value: boolean }
+  | { type: "SET_GUI_STATE"; value: GuiState };

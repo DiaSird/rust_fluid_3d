@@ -30,4 +30,5 @@ export const INITIAL_PARAMETER_STATE = {
 
   log: [""],
   isRunning: false,
+  guiState: undefined,
 } as const satisfies ParameterState;

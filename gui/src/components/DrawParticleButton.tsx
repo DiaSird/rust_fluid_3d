@@ -12,7 +12,15 @@ export const DrawParticleButton: React.FC = () => {
         return;
       }
       const guiState = await loadParticleState(state.restart_file);
-      console.log(JSON.stringify(guiState));
+
+      if (guiState) {
+        dispatch({
+          type: "SET_GUI_STATE",
+          value: guiState,
+        });
+      } else {
+        console.log("SET_GUI_STATE: Failed to read state.");
+      }
     } catch (e) {
       dispatch({
         type: "APPEND_LOG",
