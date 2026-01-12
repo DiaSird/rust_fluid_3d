@@ -99,7 +99,7 @@ impl Default for CheckpointConfig {
             // misc
             restart_file: None,
             out_file: std::path::PathBuf::from("./sim_checkpoint.bin"),
-            monitor_particle: 0,
+            monitor_particle: 10,
         }
     }
 }

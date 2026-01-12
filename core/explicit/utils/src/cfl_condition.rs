@@ -1,6 +1,6 @@
-use super::parameters::{DIM, Particle, SMOOTH_LENGTH};
+use super::parameters::{DIM, Particle};
 
-pub fn cfl_dt(dt: f64, particles: &[Particle<DIM>]) -> f64 {
+pub fn cfl_dt(dt: f64, particles: &[Particle<DIM>], smooth_length: f64) -> f64 {
     // get max velocity
     let v_max: Option<f64> = particles
         .iter()
@@ -20,7 +20,7 @@ pub fn cfl_dt(dt: f64, particles: &[Particle<DIM>]) -> f64 {
 
     // Calculate the new time step dt
     let new_dt = match (v_max, max_sound_v) {
-        (Some(a), Some(b)) if (a + b) > 0.0 => 0.3 * SMOOTH_LENGTH / (a + b),
+        (Some(a), Some(b)) if (a + b) > 0.0 => 0.3 * smooth_length / (a + b),
         _ => dt,
     };
 

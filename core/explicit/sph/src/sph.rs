@@ -114,8 +114,15 @@ pub fn sph(config: Config) -> Result<(), SimError> {
 
     // --- Simulation loop
     while step <= max_step {
-        dt = cfl_dt(dt, &particles[0..n]);
-        boundary_condition(&mut particles[0..n], bc_pattern, u_lid);
+        dt = cfl_dt(dt, &particles[0..n], smooth_length);
+        boundary_condition(
+            &mut particles[0..n],
+            bc_pattern,
+            u_lid,
+            model_scale.clone(),
+            dx.clone(),
+            smooth_length,
+        );
 
         update_half_velocity(dt, &mut particles[0..n])?;
         update_location(dt, &mut particles[0..n])?;

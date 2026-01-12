@@ -105,6 +105,8 @@ impl SphDiff for Tensor<DIM> {
         _neighbors: &[Neighbor<DIM>],
         _i: usize,
     ) -> Result<(), Self::Error> {
+        // Initialize
+        *self = Self::new();
         // No-need to impl
         Ok(())
     }
@@ -115,6 +117,9 @@ impl SphDiff for Tensor<DIM> {
             _ => particles[i - 1].pair + 1,
         };
         let end: usize = particles[i].pair;
+
+        // Initialize
+        *self = Self::new();
 
         // sph referred to neighboring list (pair: start -> end)
         for neigh in neighbors.iter().take(end + 1).skip(start) {

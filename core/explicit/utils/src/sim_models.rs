@@ -162,8 +162,10 @@ fn make_box_model(
         }
     }
 
+    // Particle volume
+    let volume = model_scale.length * model_scale.width * model_scale.height;
     for particle in particles.iter_mut().take(n) {
-        particle.volume /= n as f64;
+        particle.volume = volume / n as f64;
     }
 
     // Debug

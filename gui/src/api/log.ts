@@ -1,4 +1,4 @@
-export type Vector3 = [number, number, number];
+import type { Vector3 } from "../components/providers/parameters/types";
 
 export type ParticleLogNormalized =
   | {

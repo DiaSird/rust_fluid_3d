@@ -1,7 +1,4 @@
-use crate::parameters::{
-    Fluid, Matrix, Vector,
-    consts::{HEIGHT, LENGTH, WIDTH},
-};
+use crate::parameters::{Fluid, Matrix, Vector};
 use nalgebra::SimdComplexField;
 
 // Particle information
@@ -61,7 +58,7 @@ impl<const DIM: usize> Particle<DIM> {
         // set a new particle
         Self {
             pair: 0,
-            volume: LENGTH * WIDTH * HEIGHT,
+            volume: 0.5 * 0.5 * 0.5,
             rho0,
             rho,
             viscosity,

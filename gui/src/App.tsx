@@ -3,6 +3,7 @@ import ThreeView from "./components/ThreeView";
 import { ParameterProvider } from "./components/providers/parameters/ParameterProvider";
 import { RunStopButton } from "./components/RunStopButton";
 import { useWatchLog } from "./components/hooks/useWatchLog";
+import { DrawParticleButton } from "./components/DrawParticleButton";
 
 export default function App() {
   return (
@@ -26,7 +27,7 @@ const AppInner = () => {
 
       {/* Bottom Run / Stop bar */}
       <div style={runBar}>
-        <RunStopButton />
+        <RunStopButton /> <DrawParticleButton />
       </div>
     </div>
   );

@@ -26,7 +26,7 @@ export const INITIAL_PARAMETER_STATE = {
   max_step: 1000,
 
   restart_file: "sim_checkpoint.bin",
-  monitor_particle: 0,
+  monitor_particle: 10,
 
   log: [""],
   isRunning: false,

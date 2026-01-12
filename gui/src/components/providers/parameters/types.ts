@@ -1,3 +1,11 @@
+export type Vector3 = [number, number, number];
+
+export type Matrix3 = [
+  [number, number, number],
+  [number, number, number],
+  [number, number, number]
+];
+
 export interface ModelScale {
   length: number;
   width: number;
@@ -10,7 +18,7 @@ export interface Resolution {
   dz: number;
 }
 
-/** Boundary Condition */
+/** Boundary Condition **/
 export const BC_OPTIONS = [
   "Cavity-Flow",
   "Poiseuille-Flow",
