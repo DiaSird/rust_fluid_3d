@@ -28,10 +28,7 @@ where
 }
 
 /// # Errors
-pub fn load_data_from_checkpoint<'a, const D: usize, P>(
-    path: P,
-    buf: &'a [u8],
-) -> Result<State<'a, D>, SimError>
+pub fn load_data_from_checkpoint<'a, const D: usize, P>(path: P, buf: &'a [u8]) -> Result<State<'a, D>, SimError>
 where
     P: AsRef<std::path::Path>,
 {
@@ -44,10 +41,7 @@ where
 }
 
 /// # Errors
-pub fn write_checkpoint<const D: usize>(
-    path: impl AsRef<std::path::Path>,
-    state: &State<D>,
-) -> Result<(), SimError> {
+pub fn write_checkpoint<const D: usize>(path: impl AsRef<std::path::Path>, state: &State<D>) -> Result<(), SimError> {
     let path = path.as_ref();
     let buf = postcard::to_allocvec(state).with_context(|_| PostcardSnafu {
         path: path.to_path_buf(),
@@ -100,8 +94,7 @@ mod tests {
         let n = 3;
         let water = Fluid::Water;
         let particles: Vec<Particle<DIM>> = (0..n).map(|_| Particle::new(water)).collect();
-        let neighbors: Vec<NeighboringList<DIM>> =
-            (0..n).map(|_| NeighboringList::default()).collect();
+        let neighbors: Vec<NeighboringList<DIM>> = (0..n).map(|_| NeighboringList::default()).collect();
 
         let step = 10;
         let time = config.checkpoint_config.dt * step as f64;

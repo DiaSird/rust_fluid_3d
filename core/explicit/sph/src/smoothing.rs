@@ -18,11 +18,7 @@ impl CsValue {
     }
 }
 
-pub(crate) fn conservative_smoothing(
-    particles: &mut [Particle<DIM>],
-    neighbors: &[Neighbor<DIM>],
-    cs_rate: f64,
-) {
+pub(crate) fn conservative_smoothing(particles: &mut [Particle<DIM>], neighbors: &[Neighbor<DIM>], cs_rate: f64) {
     // initialize coefficients
     let mut coef = vec![0.0; particles.len()];
     let mut cs_value: Vec<CsValue> = (0..particles.len()).map(|_| CsValue::new()).collect();
@@ -48,12 +44,8 @@ pub(crate) fn conservative_smoothing(
     }
 
     // smoothing
-    particles
-        .par_iter_mut()
-        .enumerate()
-        .for_each(|(i, particle)| {
-            particle.v = (1.0 - cs_rate) * particle.v + cs_rate * cs_value[i].velocity / coef[i];
-            particle.stress =
-                (1.0 - cs_rate) * particle.stress + cs_rate * cs_value[i].stress / coef[i];
-        });
+    particles.par_iter_mut().enumerate().for_each(|(i, particle)| {
+        particle.v = (1.0 - cs_rate) * particle.v + cs_rate * cs_value[i].velocity / coef[i];
+        particle.stress = (1.0 - cs_rate) * particle.stress + cs_rate * cs_value[i].stress / coef[i];
+    });
 }

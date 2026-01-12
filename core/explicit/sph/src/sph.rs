@@ -43,9 +43,11 @@ pub fn sph(config: Config) -> Result<(), SimError> {
 
     let mut particles: Vec<Particle<DIM>>;
     let mut neighbors: Vec<Neighbor<DIM>>;
+    let n: usize;
+    let k: usize;
     let mut step: usize;
 
-    // Model particles
+    // Set model particles
     if let Some(file) = restart_file {
         // Load checkpoint
         let buf = read_checkpoint_and_set_buffer(&file)?;
@@ -60,13 +62,16 @@ pub fn sph(config: Config) -> Result<(), SimError> {
         particles = state.particles.to_vec();
         neighbors = state.neighbors.to_vec();
 
+        n = particles.len();
+        k = neighbors.len();
+
+        // Output restore log
         let log = format!(
             "Restarted from checkpoint {} at step {}, time {:.3} [ms]",
             file.display(),
             state.step,
             time * 1000.0
         );
-
         if let Some(log_report) = &log_report {
             log_report(utils::parameters::ParticleLog::LogInfo(log));
         }
@@ -74,38 +79,38 @@ pub fn sph(config: Config) -> Result<(), SimError> {
         // Initialize step, Particles and Neighbors
         step = 1;
         particles = (0..max_n).map(|_| Particle::new(water)).collect();
-        neighbors = (0..max_n * max_near_n)
-            .map(|_| Neighbor::default())
-            .collect();
+        neighbors = (0..max_n * max_near_n).map(|_| Neighbor::default()).collect();
+
+        // --- Initialing Simulation
+        if let Some(log_report) = &log_report {
+            log_report(utils::parameters::ParticleLog::LogInfo("Creating models...".into()));
+        }
+
+        // n: total particle numbers, k: total pair particles
+        n = make_model("box", &mut particles, &model_scale, &dx)?;
+
+        if let Some(log_report) = &log_report {
+            log_report(utils::parameters::ParticleLog::LogInfo(
+                "Searching neighboring particles...".into(),
+            ));
+        }
+        k = search_near_particles(
+            &mut particles[0..n],
+            &mut neighbors,
+            max_n * max_near_n,
+            smooth_length,
+            cell_scale,
+        )?;
+
+        if let Some(log_report) = &log_report {
+            // #[rustfmt::skip]
+            display_result(monitor_particle, log_report, step, time, &particles[0..n]);
+        }
     }
 
     // Gradient and div particles
     let mut diff_velocity: Vec<Velocity<DIM>> = (0..max_n).map(|_| Velocity::new()).collect();
     let mut diff_stress: Vec<Tensor<DIM>> = (0..max_n).map(|_| Tensor::new()).collect();
-
-    // --- Initialing Simulation
-    if let Some(log_report) = &log_report {
-        log_report(utils::parameters::ParticleLog::LogInfo(
-            "Creating models...".into(),
-        ));
-    }
-
-    // n: total particle numbers, k: total pair particles
-    let n: usize = make_model("box", &mut particles, &model_scale, &dx)?;
-
-    if let Some(log_report) = &log_report {
-        log_report(utils::parameters::ParticleLog::LogInfo(
-            "Searching neighboring particles...".into(),
-        ));
-    }
-
-    #[rustfmt::skip]
-    let k = search_near_particles(&mut particles[0..n], &mut neighbors, max_n * max_near_n, smooth_length, cell_scale)?;
-
-    if let Some(log_report) = &log_report {
-        #[rustfmt::skip]
-        display_result(monitor_particle, log_report, step, time, &particles[0..n]);
-    }
 
     // --- Simulation loop
     while step <= max_step {
@@ -115,18 +120,12 @@ pub fn sph(config: Config) -> Result<(), SimError> {
         update_half_velocity(dt, &mut particles[0..n])?;
         update_location(dt, &mut particles[0..n])?;
 
-        #[rustfmt::skip]
         update_density(dt, &mut particles[0..n], &neighbors[0..k], &mut diff_velocity[0..n])?;
-
-        #[rustfmt::skip]
         update_artificial_viscosity(&mut particles[0..n], &neighbors[0..k], smooth_length, beta);
 
-        #[rustfmt::skip]
-        update_stress(&mut particles[0..n], &mut neighbors[0..k], &mut diff_velocity[0..n],)?;
+        update_stress(&mut particles[0..n], &mut neighbors[0..k], &mut diff_velocity[0..n])?;
 
-        #[rustfmt::skip]
         update_acceleration(&mut particles[0..n], &neighbors[0..k], &mut diff_stress[0..n])?;
-
         update_half_velocity(dt, &mut particles[0..n])?;
 
         conservative_smoothing(&mut particles[0..n], &neighbors[0..k], cs_rate);
@@ -134,10 +133,8 @@ pub fn sph(config: Config) -> Result<(), SimError> {
         // Output
         if step.is_multiple_of(out_step) {
             if let Some(log_report) = &log_report {
-                #[rustfmt::skip]
                 display_result(monitor_particle, log_report, step, time, &particles[0..n]);
             }
-            #[rustfmt::skip]
             rw_checkpoint::write_sim_checkpoint(&out_file, &ckpt_config, &particles[0..n], &neighbors[0..k], step, time)?;
         }
 

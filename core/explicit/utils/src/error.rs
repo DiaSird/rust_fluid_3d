@@ -23,17 +23,11 @@ pub enum SimError {
 
     /// Failed to write file.
     #[snafu(display("Failed to write file: {}", path.display()))]
-    FailedWriteFile {
-        source: std::io::Error,
-        path: PathBuf,
-    },
+    FailedWriteFile { source: std::io::Error, path: PathBuf },
 
     /// Failed to read file.
     #[snafu(display("Failed to read file: {}", path.display()))]
-    FailedReadFile {
-        source: std::io::Error,
-        path: PathBuf,
-    },
+    FailedReadFile { source: std::io::Error, path: PathBuf },
 
     /// Failed to read file.
     #[snafu(display("Failed to read file: {}", path.display()))]
@@ -41,10 +35,7 @@ pub enum SimError {
 
     /// Failed to read postcard file.
     #[snafu(display("Failed to read postcard file: {}", path.display()))]
-    PostcardError {
-        source: postcard::Error,
-        path: PathBuf,
-    },
+    PostcardError { source: postcard::Error, path: PathBuf },
 
     /// Failed: conservative smoothing.
     FailedConservativeSmoothing,

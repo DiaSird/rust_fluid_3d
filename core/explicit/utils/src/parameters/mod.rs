@@ -23,6 +23,5 @@ pub enum Fluid {
 
 /// type arias
 pub(crate) type Vector<const DIM: usize> = na::SVector<f64, DIM>;
-pub(crate) type Matrix<const DIM: usize> =
-    na::Matrix<f64, na::Const<DIM>, na::Const<DIM>, na::ArrayStorage<f64, DIM, DIM>>;
+pub(crate) type Matrix<const DIM: usize> = na::Matrix<f64, na::Const<DIM>, na::Const<DIM>, na::ArrayStorage<f64, DIM, DIM>>;
 pub type BC = BoundaryCondition;

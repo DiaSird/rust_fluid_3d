@@ -9,31 +9,16 @@ use utils::{
 pub(crate) trait _SphStd {
     type Error;
 
-    fn sph_std(
-        &mut self,
-        particles: &[Particle<DIM>],
-        neighbors: &[Neighbor<DIM>],
-        i: usize,
-    ) -> Result<(), Self::Error>;
+    fn sph_std(&mut self, particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>], i: usize) -> Result<(), Self::Error>;
 }
 
 // Differential sph
 pub(crate) trait SphDiff {
     type Error;
 
-    fn _sph_grad(
-        &mut self,
-        particles: &[Particle<DIM>],
-        neighbors: &[Neighbor<DIM>],
-        i: usize,
-    ) -> Result<(), Self::Error>;
+    fn _sph_grad(&mut self, particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>], i: usize) -> Result<(), Self::Error>;
 
-    fn sph_div(
-        &mut self,
-        particles: &[Particle<DIM>],
-        neighbors: &[Neighbor<DIM>],
-        i: usize,
-    ) -> Result<(), Self::Error>;
+    fn sph_div(&mut self, particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>], i: usize) -> Result<(), Self::Error>;
 }
 
 // -- Structs --
@@ -62,21 +47,22 @@ impl<const D: usize> SphDiff for Velocity<D> {
         _neighbors: &[Neighbor<DIM>],
         _i: usize,
     ) -> Result<(), Self::Error> {
+        // Initialize
+        *self = Self::new();
+
         Ok(())
     }
 
     // Todo: Generic Vector (velocity -> vector3)
-    fn sph_div(
-        &mut self,
-        particles: &[Particle<DIM>],
-        neighbors: &[Neighbor<DIM>],
-        i: usize,
-    ) -> Result<(), SimError> {
+    fn sph_div(&mut self, particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>], i: usize) -> Result<(), SimError> {
         let start: usize = match i {
             0 => 0,
             _ => particles[i - 1].pair + 1,
         };
         let end: usize = particles[i].pair;
+
+        // Initialize
+        *self = Self::new();
 
         // sph referred to neighboring list (pair: start -> end)
         for neigh in neighbors.iter().take(end + 1).skip(start) {
@@ -106,9 +92,7 @@ pub struct Tensor<const D: usize> {
 
 impl Tensor<DIM> {
     pub const fn new() -> Self {
-        Tensor {
-            div_tensor: [0.0; DIM],
-        }
+        Tensor { div_tensor: [0.0; DIM] }
     }
 }
 
@@ -125,12 +109,7 @@ impl SphDiff for Tensor<DIM> {
         Ok(())
     }
 
-    fn sph_div(
-        &mut self,
-        particles: &[Particle<DIM>],
-        neighbors: &[Neighbor<DIM>],
-        i: usize,
-    ) -> Result<(), Self::Error> {
+    fn sph_div(&mut self, particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>], i: usize) -> Result<(), Self::Error> {
         let start: usize = match i {
             0 => 0,
             _ => particles[i - 1].pair + 1,

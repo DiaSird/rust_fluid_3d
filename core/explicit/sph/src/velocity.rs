@@ -4,10 +4,7 @@ use utils::{
     parameters::{DIM, Particle},
 };
 
-pub(crate) fn update_half_velocity(
-    dt: f64,
-    particles: &mut [Particle<DIM>],
-) -> Result<(), SimError> {
+pub(crate) fn update_half_velocity(dt: f64, particles: &mut [Particle<DIM>]) -> Result<(), SimError> {
     particles.par_iter_mut().try_for_each(|particle| {
         for i in 0..DIM {
             // half increment

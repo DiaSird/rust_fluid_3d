@@ -21,15 +21,12 @@ pub(crate) fn update_artificial_viscosity(
                 let cij = 0.5 * (particles[neigh.i].sound_v + particles[neigh.j].sound_v);
 
                 // Relative distance
-                let vij = na::Vector3::from(particles[neigh.i].v)
-                    - na::Vector3::from(particles[neigh.j].v);
-                let xij = na::Vector3::from(particles[neigh.i].x)
-                    - na::Vector3::from(particles[neigh.j].x);
+                let vij = na::Vector3::from(particles[neigh.i].v) - na::Vector3::from(particles[neigh.j].v);
+                let xij = na::Vector3::from(particles[neigh.i].x) - na::Vector3::from(particles[neigh.j].x);
 
                 let v_dot_x = vij.dot(&xij);
                 if v_dot_x < 0.0 {
-                    let coef =
-                        v_dot_x / (0.1 * smooth_length).mul_add(0.1 * smooth_length, xij.dot(&xij));
+                    let coef = v_dot_x / (0.1 * smooth_length).mul_add(0.1 * smooth_length, xij.dot(&xij));
                     let identity = na::Matrix3::identity();
                     let coef_val = (-beta * cij).mul_add(coef, beta * coef.powi(2)) / rho_ij;
 

@@ -40,13 +40,7 @@ pub fn write_velocity_to_csv(step: usize, particles: &[Particle<DIM>]) -> Result
 }
 
 /// # Errors
-pub fn display_result(
-    monitor_particle: usize,
-    status: &LogReporterFn,
-    step: usize,
-    time: f64,
-    particles: &[Particle<DIM>],
-) {
+pub fn display_result(monitor_particle: usize, status: &LogReporterFn, step: usize, time: f64, particles: &[Particle<DIM>]) {
     let x: [f64; DIM] = particles[monitor_particle].axis().into();
     let v: [f64; DIM] = particles[monitor_particle].velocity().into();
     let dvdt: [f64; DIM] = particles[monitor_particle].accel().into();

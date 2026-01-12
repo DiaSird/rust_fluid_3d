@@ -7,11 +7,8 @@ pub(crate) fn run() {
         .invoke_handler(tauri::generate_handler![crate::cmd::run_simulation,])
         .setup(|app| {
             if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
+                app.handle()
+                    .plugin(tauri_plugin_log::Builder::default().level(log::LevelFilter::Info).build())?;
             }
             Ok(())
         })

@@ -28,10 +28,7 @@ fn b_spline_kernel(q: f64) -> (f64, f64) {
 type Grid = HashMap<(usize, usize, usize), Vec<usize>>;
 
 fn min_location(particles: &[Particle<DIM>], index: usize) -> f64 {
-    particles
-        .iter()
-        .map(|p| p.x[index])
-        .fold(f64::INFINITY, f64::min)
+    particles.iter().map(|p| p.x[index]).fold(f64::INFINITY, f64::min)
 }
 
 fn cell_location(x: f64, min: f64, cell_size: f64) -> usize {
@@ -85,11 +82,9 @@ pub(crate) fn search_near_particles(
                 for dz in -1..=1 {
                     let neighbor_cell = (cell_x + dx, cell_y + dy, cell_z + dz);
 
-                    if let Some(neighbors) = grid.get(&(
-                        neighbor_cell.0 as usize,
-                        neighbor_cell.1 as usize,
-                        neighbor_cell.2 as usize,
-                    )) {
+                    if let Some(neighbors) =
+                        grid.get(&(neighbor_cell.0 as usize, neighbor_cell.1 as usize, neighbor_cell.2 as usize))
+                    {
                         for &j in neighbors {
                             if i != j {
                                 let d = particles[i].x.metric_distance(&particles[j].x);
@@ -149,10 +144,7 @@ pub fn make_neighboring_list(particles: &mut [Particle<DIM>], neighbors: &[Neigh
 
 // Write only the particles created
 #[allow(unused)]
-fn write_kernel_to_csv(
-    particles: &[Particle<DIM>],
-    neighbors: &[Neighbor<DIM>],
-) -> Result<(), SimError> {
+fn write_kernel_to_csv(particles: &[Particle<DIM>], neighbors: &[Neighbor<DIM>]) -> Result<(), SimError> {
     let filename = std::path::PathBuf::from("./results/kernel.csv");
     let mut csv = String::new();
 
